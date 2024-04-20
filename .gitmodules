@@ -1,0 +1,3 @@
+[submodule "APIsanity-check"]
+	path = APIsanity-check
+	url = https://github.com/100mountains/APIsanity-check
