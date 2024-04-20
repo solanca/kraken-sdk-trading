@@ -3,33 +3,36 @@ use kraken_futures_rest_client::{Client as FuturesClient, Result as FuturesResul
 
 use std::env;
 
-fn test_get_account_balance(rest_client: &RestClient) -> RestResult<()> {
-    let balance = rest_client.get_account_balance()?;
+async fn test_get_account_balance(rest_client: &RestClient) -> RestResult<()> {
+    let balance = rest_client.get_account_balance().send().await?;
     println!("Account Balance: {:?}", balance);
     Ok(())
 }
 
-fn test_place_order(rest_client: &RestClient) -> RestResult<()> {
-    let order = Order {
-        pair: PairName::new("XBTUSD"),
-        order_type: OrderType::Buy,
-        volume: 1.0,
-        price: Some(30000.0),
-        ..Default::default()
-    };
-    let response = rest_client.add_order(&order)?;
+async fn test_place_order(rest_client: &RestClient) -> RestResult<()> {
+    let order = AddOrderRequest::limit(
+        OrderSide::Buy,
+        1.0,
+        &PairName::from("XBT", "USD"), 
+        30000.0,
+    );
+    let response = rest_client.add_order(order).send().await?;
     println!("Order Response: {:?}", response);
     Ok(())
 }
 
-fn test_get_market_data(rest_client: &RestClient) -> RestResult<()> {
-    let data = rest_client.get_ohlc_data(&PairName::new("XBTUSD"), Interval::OneMinute, None, None)?;
+async fn test_get_market_data(rest_client: &RestClient) -> RestResult<()> {
+    let data = rest_client
+        .get_ohlc_data(&PairName::from("XBT", "USD"))
+        .interval(Interval::Min1)
+        .send()
+        .await?;
     println!("Market Data: {:?}", data);
     Ok(())
 }
 
-fn test_futures_get_instruments(futures_client: &FuturesClient) -> FuturesResult<()> {
-    let instruments = futures_client.get_instruments()?;
+async fn test_futures_get_instruments(futures_client: &FuturesClient) -> FuturesResult<()> {
+    let instruments = futures_client.get_instruments().send().await?;
     println!("Futures Instruments: {:?}", instruments);
     Ok(())
 }
@@ -53,7 +56,8 @@ fn test_get_server_time(rest_client: &RestClient) -> RestResult<()> {
     Ok(())
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
         println!("Usage: cli_tester <function_name>");
@@ -63,17 +67,16 @@ fn main() {
     let rest_client = RestClient::new("api_key", "api_secret");
 
     match args[1].as_str() {
-        "get_account_balance" => test_get_account_balance(&rest_client).unwrap(),
+        "get_account_balance" => test_get_account_balance(&rest_client).await.unwrap(),
         "place_order" => test_place_order(&rest_client).unwrap(),
         "get_market_data" => test_get_market_data(&rest_client).unwrap(),
-        "futures_get_instruments" => test_futures_get_instruments(&futures_client).unwrap(),
+        "futures_get_instruments" => test_futures_get_instruments(&futures_client).await.unwrap(),
         "get_tradable_assets" => test_get_tradable_assets(&rest_client).unwrap(),
         "get_ticker_info" => test_get_ticker_info(&rest_client).unwrap(),
         "get_server_time" => test_get_server_time(&rest_client).unwrap(),
         _ => println!("Unknown function: {}", args[1]),
     }
 }
-
 
 
 
