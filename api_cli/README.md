@@ -17,7 +17,7 @@ api_cli <broker> <function_name>
 
 The CLI supports the following cryptocurrency exchanges:
 
-- Kraken
+- Kraken - THIS ONE ONLY 
 - Coinbase
 - KuCoin
 - Binance

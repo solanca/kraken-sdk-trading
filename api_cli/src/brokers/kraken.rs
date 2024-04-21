@@ -1,5 +1,5 @@
-use kraken_rest_client::{Client as RestClient, Result as RestResult};
-use kraken_rest_client::api::get_ohlc_data::{Interval, GetOhlcDataResponse};
+use kraken_rest_client::{Client as RestClient};
+use kraken_rest_client::api::get_ohlc_data::{Interval};
 use kraken_rest_client::types::pair_name::PairName;
 
 use std::env;
@@ -120,14 +120,127 @@ pub async fn get_ohlc_data() {
 
 pub async fn get_account_balance() {
     println!("Testing get_account_balance...");
+
+    dotenv().ok();
+
+    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
+    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+
+    let client = RestClient::new(api_key, api_secret);
+    let request = client.get_account_balance();
+    match request.send().await {
+        Ok(account_balance) => {
+            println!("Account balance retrieved successfully:");
+            for (key, value) in account_balance {
+                println!("{}: {}", key, value);
+            }
+        }
+        Err(error) => {
+            eprintln!("Error retrieving account balance: {:?}", error);
+        }
+    }
+
 }
+
+// pub struct GetTradeBalanceResponse {
+//     pub equivalent_balance: String,
+//     pub trade_balance: String,
+//     pub margin: String,
+//     pub unrealized_net_pnl: String,
+//     pub cost_basis: String,
+//     pub valuation: String,
+//     pub equity: String,
+//     pub free_margin: String,
+//     pub margin_level: Option<String>,
+// }
 
 pub async fn get_trade_balance() {
     println!("Testing get_trade_balance...");
+
+    dotenv().ok();
+
+    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
+    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+
+    let client = RestClient::new(api_key, api_secret);
+    let request = client.get_trade_balance();
+
+    match request.send().await {
+        Ok(trade_balance) => {
+            println!("Trade balance retrieved successfully:");
+            println!("Equivalent balance: {}", trade_balance.equivalent_balance);
+            println!("Trade balance: {}", trade_balance.trade_balance);
+            println!("Margin: {}", trade_balance.margin);
+            println!("Unrealized net profit/loss: {}", trade_balance.unrealized_net_pnl);
+            println!("Cost basis: {}", trade_balance.cost_basis);
+            println!("Valuation: {}", trade_balance.valuation);
+            println!("Equity: {}", trade_balance.equity);
+            println!("Free margin: {}", trade_balance.free_margin);
+            if let Some(margin_level) = trade_balance.margin_level {
+                println!("Margin level: {}", margin_level);
+            }
+        }
+        Err(error) => {
+            eprintln!("Error retrieving trade balance: {:?}", error);
+        }
+    }
 }
+
+
+// pub struct GetTradesHistoryResponse {
+//     pub trades: HashMap<String, TradeInfo>,
+//     pub count: usize,
+// }
+
+// pub struct TradeInfo {
+//     pub ordertxid: String,
+//     pub pair: String,
+//     pub time: f64,
+//     pub orderside: String,
+//     pub ordertype: String,
+//     pub price: String,
+//     pub cost: String,
+//     pub fee: String,
+//     pub vol: String,
+//     pub margin: String,
+//     pub misc: String,
+// }
 
 pub async fn get_trades_history() {
     println!("Testing get_trades_history...");
+
+    dotenv().ok();
+
+    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
+    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+
+    let client = RestClient::new(api_key, api_secret);
+    let request = client.get_trades_history();
+
+    match request.send().await {
+        Ok(trades_history) => {
+            println!("Trades history retrieved successfully:");
+            for (trade_id, trade) in &trades_history.trades {
+                println!("Trade ID: {}", trade_id);
+                println!("  Order TX ID: {}", trade.ordertxid);
+                println!("  Pair: {}", trade.pair);
+                println!("  Time: {}", trade.time);
+                println!("  Type: {}", trade.orderside);
+                println!("  Order Type: {}", trade.ordertype);
+                println!("  Price: {}", trade.price);
+                println!("  Cost: {}", trade.cost);
+                println!("  Fee: {}", trade.fee);
+                println!("  Volume: {}", trade.vol);
+                println!("  Margin: {}", trade.margin);
+                println!("  Misc: {}", trade.misc);
+                println!();
+            }
+            println!("Count: {}", trades_history.count);
+        }
+        Err(error) => {
+            eprintln!("Error retrieving trades history: {:?}", error);
+        }
+    }
 }
 
 pub async fn get_web_sockets_token() {
@@ -148,6 +261,55 @@ pub async fn get_trade_volume() {
 
 pub async fn query_orders_info() {
     println!("Testing query_orders_info...");
+
+    dotenv().ok();
+
+    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
+    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+
+    let client = RestClient::new(api_key, api_secret);
+
+    // Replace with the actual transaction IDs you want to query
+    let txids = "TXID1,TXID2,TXID3";
+
+    let request = client
+        .query_orders_info(txids)
+        .trades(true);
+
+    match request.send().await {
+        Ok(orders_info) => {
+            println!("Orders information retrieved successfully:");
+            for (txid, order_info) in orders_info {
+                println!("Transaction ID: {}", txid);
+                println!("  Userref: {:?}", order_info.userref);
+                println!("  Status: {}", order_info.status);
+                println!("  Order description:");
+                println!("    Pair: {}", order_info.descr.pair);
+                println!("    Type: {}", order_info.descr.orderside);
+                println!("    Order type: {}", order_info.descr.ordertype);
+                println!("    Price: {}", order_info.descr.price);
+                println!("    Price 2: {}", order_info.descr.price2);
+                println!("    Leverage: {}", order_info.descr.leverage);
+                println!("    Order: {}", order_info.descr.order);
+                println!("    Close: {}", order_info.descr.close);
+                println!("  Open flags: {}", order_info.oflags);
+                println!("  Open time: {}", order_info.opentm);
+                println!("  Expire time: {}", order_info.expiretm);
+                println!("  Volume: {}", order_info.vol);
+                println!("  Volume executed: {}", order_info.vol_exec);
+                println!("  Cost: {}", order_info.cost);
+                println!("  Fee: {}", order_info.fee);
+                println!("  Misc: {}", order_info.misc);
+                println!("  Limit price: {}", order_info.limitprice);
+                println!("  Reference ID: {:?}", order_info.refid);
+                println!("  Reason: {:?}", order_info.reason);
+                println!();
+            }
+        }
+        Err(error) => {
+            eprintln!("Error retrieving orders information: {:?}", error);
+        }
+    }
 }
 
 pub async fn stake_asset() {
@@ -222,8 +384,61 @@ pub async fn get_assets() {
     println!("Testing get_assets...");
 }
 
+
+// pub struct AssetPair {
+//     pub altname: String,
+//     pub base: String,
+//     pub quote: String,
+//     pub lot_decimals: u32,
+//     pub pair_decimals: u32,
+//     pub lot_multiplier: i32,
+//     pub leverage_buy: Vec<u32>,
+//     pub leverage_sell: Vec<u32>,
+//     pub fees: Vec<(u64, f64)>,
+//     pub fees_maker: Vec<(u64, f64)>,
+//     pub fee_volume_currency: String,
+//     pub margin_call: u32,
+//     pub margin_stop: u32,
+//     pub ordermin: String,
+// }
+
+
 pub async fn get_asset_pairs() {
     println!("Testing get_asset_pairs...");
+
+    let client = RestClient::default();
+
+    let request = client.get_asset_pairs();
+
+    match request.send().await {
+        Ok(asset_pairs) => {
+            println!("Asset pairs retrieved successfully:");
+            for (pair, info) in asset_pairs {
+                println!("Pair: {}", pair);
+                println!("  Altname: {}", info.altname);
+                println!("  Base: {}", info.base);
+                println!("  Quote: {}", info.quote);
+                println!("  Lot decimals: {}", info.lot_decimals);
+                println!("  Pair decimals: {}", info.pair_decimals);
+                println!("  Lot multiplier: {}", info.lot_multiplier);
+                println!("  Leverage buy: {:?}", info.leverage_buy);
+                println!("  Leverage sell: {:?}", info.leverage_sell);
+                println!("  Fees: {:?}", info.fees);
+                println!("  Fees maker: {:?}", info.fees_maker);
+                println!("  Fee volume currency: {}", info.fee_volume_currency);
+                println!("  Margin call: {}", info.margin_call);
+                println!("  Margin stop: {}", info.margin_stop);
+                match &info.ordermin {
+                    Some(min) => println!("  Order min: {}", min),
+                    None => println!("  Order min: None"),
+                }
+                println!();
+            }
+        }
+        Err(error) => {
+            eprintln!("Error retrieving asset pairs: {:?}", error);
+        }
+    }
 }
 
 pub async fn get_deposit_methods() {
