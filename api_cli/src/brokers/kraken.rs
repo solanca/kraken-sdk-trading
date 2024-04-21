@@ -40,6 +40,7 @@ pub async fn handle_function(function_name: &str) {
         "get_tickers" => get_tickers().await,
         "cancel_order_batch" => cancel_order_batch().await,
         "add_order" => add_order().await,
+        "verify_order" => verify_order().await,
         "cancel_all_orders" => cancel_all_orders().await,
         "cancel_order" => cancel_order().await,
         "get_closed_orders" => get_closed_orders().await,
@@ -696,6 +697,18 @@ pub async fn cancel_order_batch() {
     }
 }
 
+async fn verify_order_helper(client: &RestClient, pair: &str, side: OrderSide, order_type: OrderType, price: &str, volume: &str) -> Result<(), String> {
+    let request = client
+        .add_order(pair, side, order_type, volume)
+        .price(price)
+        .validate(true); // Validate the order without placing it
+
+    match request.send().await {
+        Ok(_) => Ok(()),
+        Err(error) => Err(format!("Error verifying order: {:?}", error)),
+    }
+}
+
         //"market": Market order
         //"limit": Limit order
         //"stop-loss": Stop-loss order
@@ -705,6 +718,7 @@ pub async fn cancel_order_batch() {
         //"settle-position": Settle position order
 
 pub async fn add_order() {
+     
     println!("Adding order...");
 
     let (api_key, api_secret) = load_api_credentials();
@@ -716,22 +730,68 @@ pub async fn add_order() {
     let price = "50"; // Example price
     let volume = "0.5"; // Example volume
 
-    let request = client
-    .add_order(pair, side, order_type, volume)
-    .price(price)
-    .validate(false) // Validate the order before sending - careful if this is false you will actually place an order!!!!
-    .userref(12345); // Example user reference
+  // Verify the order
+  match verify_order_helper(&client, pair, side, order_type, price, volume).await {
+    Ok(_) => {
+        println!("Order verification successful. Proceeding with order placement.");
 
-match request.send().await {
-    Ok(order_result) => {
-        println!("Order added successfully:");
-        println!("Description: {:?}", order_result.descr);
-        println!("Transaction IDs: {:?}", order_result.txid);
+        // Place the order
+        let request = client
+            .add_order(pair, side, order_type, volume)
+            .price(price)
+            .userref(12345);
+
+        match request.send().await {
+            Ok(order_result) => {
+                println!("Order added successfully:");
+                println!("Description: {:?}", order_result.descr);
+
+                if let Some(txids) = order_result.txid {
+                    println!("Transaction IDs:");
+                    for txid in txids {
+                        println!("- {}", txid);
+                    }
+                } else {
+                    println!("Order not executed. Check your account balance and order details.");
+                }
+            }
+            Err(error) => {
+                eprintln!("Error adding order: {:?}", error);
+            }
+        }
     }
     Err(error) => {
-        eprintln!("Error adding order: {:?}", error);
+        eprintln!("Order verification failed: {}", error);
     }
 }
+}
+
+pub async fn verify_order() {
+    println!("Verifying order...");
+
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+    let pair = "SOLGBP"; // Example trading pair
+    let side = OrderSide::Buy; // Example order side
+    let order_type = OrderType::Limit; // Example order type
+    let price = "50"; // Example price
+    let volume = "0.5"; // Example volume
+
+    let request = client
+        .add_order(pair, side, order_type, volume)
+        .price(price)
+        .validate(true); // Validate the order without placing it
+
+    match request.send().await {
+        Ok(order_result) => {
+            println!("Order verified successfully:");
+            println!("Description: {:?}", order_result.descr);
+        },
+        Err(error) => {
+            eprintln!("Error verifying order: {:?}", error);
+        }
+    }
 }
 
 /// Cancels all open orders on the Kraken API.
@@ -761,7 +821,7 @@ pub async fn cancel_order() {
     let client = RestClient::new(api_key, api_secret);
 
    
-    let txid = "OQCLML-7WKL3-PBVWWP"; // Example order ID to cancel
+    let txid = "OBNNQW-EGOGB-RMDQ4U"; // Example order ID to cancel
 
     let request = client.cancel_order(txid);
 
@@ -960,6 +1020,7 @@ fn print_usage() {
     eprintln!("  get_tickers - Test tickers retrieval");
     eprintln!("  cancel_order_batch - Test batch order cancellation");
     eprintln!("  add_order - Test adding orders");
+    eprintln!("  verify_order - Verify adding orders");
     eprintln!("  cancel_all_orders - Test cancellation of all orders");
     eprintln!("  cancel_order - Test single order cancellation");
     eprintln!("  get_closed_orders - Test closed orders retrieval");
