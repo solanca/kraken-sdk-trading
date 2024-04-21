@@ -31,7 +31,6 @@ pub async fn handle_function(function_name: &str) {
         "get_server_time" => get_server_time().await,
         "get_open_orders" => get_open_orders().await,
         "get_recent_trades" => get_recent_trades().await,
-        "get_ohlc_data" => get_ohlc_data().await,
         "get_public_ohlc_data" => get_public_ohlc_data().await,
         "get_ledgers" => get_ledgers().await,
         "get_stakeable_assets" => get_stakeable_assets().await,
@@ -74,42 +73,6 @@ pub async fn get_public_ohlc_data() {
                     data.high(),
                     data.low(),
                     data.open(),
-                    data.close(),
-                    data.vwap(),
-                    data.volume(),
-                    data.count()
-                );
-            }
-        }
-        Err(error) => {
-            eprintln!("Error retrieving OHLC data: {:?}", error);
-        }
-    }
-}
-
-pub async fn get_ohlc_data() {
-    println!("Testing get_ohlc_data...");
-
-    let (api_key, api_secret) = load_api_credentials();
-
-    let client = RestClient::new(api_key, api_secret);
-    let pair = PairName::from("XBT", "USD");
-    let interval = Interval::Min1;
-
-    let request = client
-        .get_ohlc_data(&pair)
-        .interval(interval);
-
-    match request.send().await {
-        Ok(ohlc_data) => {
-            println!("OHLC data retrieved successfully:");
-            for data in ohlc_data {
-                println!(
-                    "Time: {}, Open: {}, High: {}, Low: {}, Close: {}, VWAP: {}, Volume: {}, Count: {}",
-                    data.time(),
-                    data.open(),
-                    data.high(),
-                    data.low(),
                     data.close(),
                     data.vwap(),
                     data.volume(),
@@ -244,8 +207,9 @@ pub async fn get_trades_history() {
 //    pub expires: i64,
 //}
 
+/// Retrieves a WebSocket token from the Kraken API for authenticating WebSocket connections.
 pub async fn get_web_sockets_token() {
-    println!("Testing get_web_sockets_token...");
+    println!("Retrieving WebSocket token...");
 
     let (api_key, api_secret) = load_api_credentials();
 
@@ -253,20 +217,43 @@ pub async fn get_web_sockets_token() {
     let request = client.get_web_sockets_token();
 
     match request.send().await {
-        Ok(token_response) => {
-            println!("Web sockets token retrieved successfully:");
-            println!("Token: {}", token_response.token);
-            println!("Expires: {}", token_response.expires);
+        Ok(response) => {
+            println!("WebSocket token retrieved successfully:");
+            println!("Token: {}, Expires in: {} seconds", response.token, response.expires);
         }
-        Err(error) => {
-            eprintln!("Error retrieving web sockets token: {:?}", error);
+        Err(e) => {
+            eprintln!("Failed to retrieve WebSocket token: {}", e);
         }
     }
 }
 
+
 pub async fn get_withdrawal_addresses() {
-    println!("Testing get_withdrawal_addresses...");
+    println!("Fetching withdrawal addresses...");
+
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+    // Create a request to get withdrawal addresses without filters
+    let request = client.get_withdrawal_addresses()
+        .asset("XBT")  // Example: filter by asset, can be modified or omitted
+        .aclass("currency")  // Example: filter by asset class, can be modified or omitted
+        .method("Bitcoin");  // Example: filter by method, can be modified or omitted
+
+    match request.send().await {
+        Ok(addresses) => {
+            println!("Withdrawal addresses retrieved successfully:");
+            for address in addresses {
+                println!("Asset: {}, Method: {}, Address: {}, Key: {}, Verified: {}",
+                         address.asset, address.method, address.address, address.key, address.verified);
+            }
+        },
+        Err(error) => {
+            eprintln!("Error retrieving withdrawal addresses: {:?}", error);
+        }
+    }
 }
+
 
 pub async fn unstake_asset() {
     println!("Testing unstake_asset...");
@@ -274,7 +261,30 @@ pub async fn unstake_asset() {
 
 pub async fn get_trade_volume() {
     println!("Testing get_trade_volume...");
+
+    let (api_key, api_secret) = load_api_credentials();
+
+    let client = RestClient::new(api_key, api_secret);
+    let pair = "XBTUSD";  // Hardcoded pair, adjust as necessary
+    let request = client.get_trade_volume(pair);  // Correctly supplying the required parameter
+
+    match request.send().await {
+        Ok(trade_volume) => {
+            println!("Trade volume retrieved successfully:");
+            println!("Currency: {}", trade_volume.currency);
+            println!("Volume: {}", trade_volume.volume);
+            println!("Fees: {:?}", trade_volume.fees);  // Use debug formatting for HashMap
+            println!("Maker Fees: {:?}", trade_volume.fees_maker);  // Use debug formatting for HashMap
+        }
+        Err(error) => {
+            eprintln!("Error retrieving trade volume: {:?}", error);
+        }
+    }
 }
+
+
+
+
 
 pub async fn query_orders_info() {
     println!("Testing query_orders_info...");
@@ -543,23 +553,39 @@ pub async fn get_stakeable_assets() {
 }
 
 pub async fn get_order_book() {
-    println!("Testing get_order_book...");
+    println!("Fetching order book...");
 
-    let client = RestClient::default(); // Use the default REST client
-    let request = client.get_order_book("XXBTZUSD,DOTUSD"); // Specify the asset pairs to retrieve order books for here 
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+  // Example: Get the order book for the "XBT/USD" pair with a maximum of 100 entries
+  let pair = "XXBTZUSD";
+  let count = 100; // Maximum number of asks/bids
 
-    match request.send().await {
-        Ok(order_book) => {
-            println!("Order books retrieved successfully:");
-            for (pair, order_book) in order_book {
-                println!("Pair: {}, Order book: {:?}", pair, order_book);
-            }
-        }
-        Err(error) => {
-            eprintln!("Error retrieving order books: {:?}", error);
-        }
-    }
+  let request = client.get_order_book(pair).count(count);
+
+  match request.send().await {
+      Ok(order_book) => {
+          if let Some(book) = order_book.get(pair) {
+              println!("Order book retrieved successfully for pair: {}", pair);
+              println!("Asks:");
+              for ask in &book.asks {
+                  println!("Price: {}, Volume: {}, Timestamp: {}", ask.0, ask.1, ask.2);
+              }
+              println!("Bids:");
+              for bid in &book.bids {
+                  println!("Price: {}, Volume: {}, Timestamp: {}", bid.0, bid.1, bid.2);
+              }
+          } else {
+              println!("No data found for pair: {}", pair);
+          }
+      }
+      Err(error) => {
+          eprintln!("Error retrieving order book: {:?}", error);
+      }
+  }
 }
+
+
 
 pub async fn get_tickers() {
     println!("Testing get_tickers...");
@@ -617,7 +643,32 @@ pub async fn get_closed_orders() {
 }
 
 pub async fn get_assets() {
-    println!("Testing get_assets...");
+    println!("Fetching assets...");
+
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+    // Example: Get information about specific assets
+    let assets = "XBT,ETH,USDT"; // Comma-separated list of assets
+
+    let request = client.get_assets().asset(assets);
+
+    match request.send().await {
+        Ok(asset_info) => {
+            println!("Asset information retrieved successfully:");
+            for (asset, info) in asset_info {
+                println!("Asset: {}", asset);
+                println!("  Altname: {}", info.altname);
+                println!("  Asset class: {}", info.aclass);
+                println!("  Decimals: {}", info.decimals);
+                println!("  Display decimals: {}", info.display_decimals);
+                println!();
+            }
+        }
+        Err(error) => {
+            eprintln!("Error retrieving asset information: {:?}", error);
+        }
+    }
 }
 
 
@@ -699,7 +750,6 @@ fn print_usage() {
     eprintln!("  get_server_time - Test server time check");
     eprintln!("  get_open_orders - Test open orders retrieval");
     eprintln!("  get_recent_trades - Test recent trades retrieval");
-    eprintln!("  get_ohlc_data - Test OHLC data retrieval");
     eprintln!("  get_public_ohlc_data - Test public OHLC data retrieval");
     eprintln!("  get_ledgers - Test ledgers retrieval");
     eprintln!("  get_stakeable_assets - Test stakeable assets retrieval");
