@@ -935,8 +935,6 @@ pub async fn get_deposit_methods() {
     }
 }
 
-
-
 fn print_usage() {
     eprintln!("List of available functions for Kraken:");
     eprintln!("  get_account_balance - Test the account balance API");
