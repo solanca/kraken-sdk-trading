@@ -4,7 +4,7 @@ This command-line interface (CLI) allows you to interact with various cryptocurr
 
 ## Usage
 
-To use the CLI, run the following command:
+To use the CLI, simply run the following command:
 
 ```
 api_cli <broker> <function_name>
@@ -17,10 +17,18 @@ api_cli <broker> <function_name>
 
 The CLI supports the following cryptocurrency exchanges:
 
+once upon a time you had 4 brokers, but now you have 1 brokers. 
+
 - Kraken - THIS ONE ONLY 
 - Coinbase
 - KuCoin
 - Binance
+
+To get started, you can use the `kraken` broker with the `get_account_balance` function.
+
+```bash 
+api_cli kraken get_account_balance
+```
 
 ## Kraken Functions
 

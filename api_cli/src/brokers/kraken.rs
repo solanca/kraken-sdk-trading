@@ -5,6 +5,8 @@ use kraken_rest_client::types::pair_name::PairName;
 use std::env;
 use dotenv::dotenv;
 
+
+
 pub async fn handle_function(function_name: &str) {
     match function_name {
         "get_account_balance" => get_account_balance().await,
@@ -243,8 +245,32 @@ pub async fn get_trades_history() {
     }
 }
 
+//pub struct GetWebSocketsTokenResponse {
+//    pub token: String,
+//    pub expires: i64,
+//}
+
 pub async fn get_web_sockets_token() {
     println!("Testing get_web_sockets_token...");
+
+    dotenv().ok();
+
+    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
+    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+
+    let client = RestClient::new(api_key, api_secret);
+    let request = client.get_web_sockets_token();
+
+    match request.send().await {
+        Ok(token_response) => {
+            println!("Web sockets token retrieved successfully:");
+            println!("Token: {}", token_response.token);
+            println!("Expires: {}", token_response.expires);
+        }
+        Err(error) => {
+            eprintln!("Error retrieving web sockets token: {:?}", error);
+        }
+    }
 }
 
 pub async fn get_withdrawal_addresses() {
@@ -270,7 +296,7 @@ pub async fn query_orders_info() {
     let client = RestClient::new(api_key, api_secret);
 
     // Replace with the actual transaction IDs you want to query
-    let txids = "TXID1,TXID2,TXID3";
+    let txids = "OWJ5IB-7VTBA-ATKFS4,OHN4FQ-TJR6U-TG5HNV";
 
     let request = client
         .query_orders_info(txids)
@@ -324,9 +350,52 @@ pub async fn get_withdrawal_methods() {
     println!("Testing get_withdrawal_methods...");
 }
 
+/// Retrieves the open positions from the Kraken API, always including P&L calculations.
 pub async fn get_open_positions() {
-    println!("Testing get_open_positions...");
+    println!("Retrieving open positions with P&L calculations...");
+
+    dotenv().ok();
+
+    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
+    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+
+    let client = RestClient::new(api_key, api_secret);
+    let request = client.get_open_positions().docalcs(true);
+
+    match request.send().await {
+        Ok(positions) => {
+            println!("Open positions retrieved successfully:");
+            for (pos_id, position) in positions {
+                println!(
+                    "Position ID: {}, Order Tx ID: {}, Status: {}, Pair: {}, Type: {}, Order Type: {}, Cost: {}, Fee: {}, Volume: {}, Closed Volume: {}, Margin: {}",
+                    pos_id,
+                    position.ordertxid,
+                    position.posstatus,
+                    position.pair,
+                    position.position_type,
+                    position.ordertype,
+                    position.cost,
+                    position.fee,
+                    position.vol,
+                    position.vol_closed,
+                    position.margin
+                );
+
+                if let Some(value) = &position.value {
+                    println!("Value: {}", value);
+                }
+
+                if let Some(net) = &position.net {
+                    println!("Net: {}", net);
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to retrieve open positions: {}", e);
+        }
+    }
 }
+
 
 pub async fn get_system_status() {
     println!("Testing get_system_status...");
@@ -378,13 +447,87 @@ pub async fn get_server_time() {
 }
 
 
+/// Retrieves the open orders from the Kraken API.
 pub async fn get_open_orders() {
-    println!("Testing get_open_orders...");
+    println!("Retrieving open orders...");
+
+    dotenv().ok(); // Ensure the environment variables are loaded
+
+    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
+    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+
+    let client = RestClient::new(api_key, api_secret);
+    let request = client.get_open_orders().trades(true); // Assuming you might want trade details by default
+
+    match request.send().await {
+        Ok(response) => {
+            println!("Open orders retrieved successfully:");
+            for (order_id, order_info) in response.open {
+                println!(
+                    "Order ID: {}, Status: {}, Cost: {}, Description: Pair: {}, Side: {}, Order Type: {}, Price: {}, Price2: {}, Open Time: {}, Flags: {}, Fee: {}, Volume: {}, Executed Volume: {}",
+                    order_id,
+                    order_info.status,
+                    order_info.cost,
+                    order_info.descr.pair, 
+                    order_info.descr.orderside, 
+                    order_info.descr.ordertype, 
+                    order_info.descr.price, 
+                    order_info.descr.price2, // Correct field names used
+                    order_info.opentm,
+                    order_info.oflags,
+                    order_info.fee,
+                    order_info.vol,
+                    order_info.vol_executed.unwrap_or("0".to_string()),
+                );
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to retrieve open orders: {}", e);
+        }
+    }
 }
 
+
+
+
+/// Retrieves the recent trades for the hardcoded pair "BTC/USD" from the Kraken API.
 pub async fn get_recent_trades() {
-    println!("Testing get_recent_trades...");
+    println!("Retrieving recent trades for pair: BTC/USD");
+
+    dotenv().ok(); // Ensure the environment variables are loaded
+
+    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
+    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+
+    let client = RestClient::new(api_key, api_secret);
+    let request = client.get_recent_trades("BTC/USD");
+
+    match request.send().await {
+        Ok(response) => {
+            println!("Recent trades retrieved successfully:");
+            for (pair_key, trades) in response.pair {
+                println!("Trading pair: {}", pair_key);
+                for trade in trades {
+                    println!(
+                        "Trade ID: {}, Price: {}, Volume: {}, Time: {}, Type: {}, Order Type: {}, Misc: {}",
+                        trade.trade_id(),
+                        trade.price(),
+                        trade.volume(),
+                        trade.time(),
+                        trade.buy_sell(),
+                        trade.market_limit(),
+                        trade.miscellaneous()
+                    );
+                }
+            }
+            println!("Last ID for further requests: {}", response.last);
+        }
+        Err(e) => {
+            eprintln!("Failed to retrieve recent trades: {}", e);
+        }
+    }
 }
+
 
 pub async fn get_ledgers() {
     println!("Testing get_ledgers...");
@@ -396,10 +539,40 @@ pub async fn get_stakeable_assets() {
 
 pub async fn get_order_book() {
     println!("Testing get_order_book...");
+
+    let client = RestClient::default(); // Use the default REST client
+    let request = client.get_order_book("XXBTZUSD,DOTUSD"); // Specify the asset pairs to retrieve order books for here 
+
+    match request.send().await {
+        Ok(order_book) => {
+            println!("Order books retrieved successfully:");
+            for (pair, order_book) in order_book {
+                println!("Pair: {}, Order book: {:?}", pair, order_book);
+            }
+        }
+        Err(error) => {
+            eprintln!("Error retrieving order books: {:?}", error);
+        }
+    }
 }
 
 pub async fn get_tickers() {
     println!("Testing get_tickers...");
+
+    let client = RestClient::default(); // Use the default REST client
+    let request = client.get_tickers("XXBTZUSD,DOTUSD"); // Specify the asset pairs to retrieve tickers for here    
+
+    match request.send().await {
+        Ok(tickers) => {
+            println!("Tickers retrieved successfully:");
+            for (pair, ticker) in tickers {
+                println!("Pair: {}, Ticker: {:?}", pair, ticker);
+            }
+        }
+        Err(error) => {
+            eprintln!("Error retrieving tickers: {:?}", error);
+        }
+    }   
 }
 
 pub async fn cancel_order_batch() {
