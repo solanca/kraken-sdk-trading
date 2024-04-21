@@ -22,6 +22,7 @@ pub async fn handle_function(function_name: &str) {
         "get_trade_history" => get_trade_history().await,
         "get_web_sockets_token" => get_web_sockets_token().await,
         "get_withdrawal_addresses" => get_withdrawal_addresses().await,
+        "get_withdrawal_status" => get_withdrawal_status().await,
         "unstake_asset" => unstake_asset().await,
         "get_trade_volume" => get_trade_volume().await,
         "query_orders_info" => query_orders_info().await,
@@ -40,6 +41,7 @@ pub async fn handle_function(function_name: &str) {
         "get_tickers" => get_tickers().await,
         "cancel_order_batch" => cancel_order_batch().await,
         "add_order" => add_order().await,
+        "edit_order" => edit_order().await,
         "verify_order" => verify_order().await,
         "cancel_all_orders" => cancel_all_orders().await,
         "cancel_order" => cancel_order().await,
@@ -47,6 +49,8 @@ pub async fn handle_function(function_name: &str) {
         "get_assets" => get_assets().await,
         "get_asset_pairs" => get_asset_pairs().await,
         "get_deposit_methods" => get_deposit_methods().await,
+        "get_deposit_status" => get_deposit_status().await,
+        "get_deposit_addresses" => get_deposit_addresses().await,
         _ => {
             eprintln!("Function '{}' not recognized for Kraken.", function_name);
             print_usage();
@@ -383,6 +387,30 @@ pub async fn withdraw() {
             eprintln!("Error withdrawing funds: {:?}", error);
         }
     }
+}
+
+pub async fn get_withdrawal_status() {
+    println!("Fetching withdrawal status... can you query this????");
+
+/*  let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+    let asset = "XBT"; // Example asset
+
+    let request = client.get_withdrawal_status(asset);
+
+    match request.send().await {
+        Ok(withdrawal_statuses) => {
+            println!("Withdrawal statuses retrieved successfully:");
+            for status in withdrawal_statuses {
+                println!("Method: {}, Aclass: {}, Asset: {}, Refid: {}, TX ID: {}, Info: {}, Amount: {}, Fee: {:?}, Time: {}, Status: {:?}, Status Prop: {:?}",
+                         status.method, status.aclass, status.asset, status.refid, status.txid, status.info, status.amount, status.fee, status.time, status.status, status.status_prop);
+            }
+        },
+        Err(error) => {
+            eprintln!("Error retrieving withdrawal status: {:?}", error);
+        }
+    }*/
 }
 
 pub async fn get_withdrawal_methods() {
@@ -794,6 +822,32 @@ pub async fn verify_order() {
     }
 }
 
+pub async fn edit_order() {
+    println!("Editing order...");
+
+ /*   let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+    let txid = "OQCLML-7WKL3-PBVWWP"; // Example order ID to edit
+    let price = "29000"; // New price
+    let volume = "0.00002"; // New volume
+
+    let request = client
+        .edit_order(txid)
+        .price(price)
+        .volume(volume);
+
+    match request.send().await {
+        Ok(edit_result) => {
+            println!("Order edited successfully:");
+            println!("Description: {:?}", edit_result.descr);
+        },
+        Err(error) => {
+            eprintln!("Error editing order: {:?}", error);
+        }
+    }*/ 
+}
+
 /// Cancels all open orders on the Kraken API.
 pub async fn cancel_all_orders() {
     println!("Attempting to cancel all open orders...");
@@ -995,6 +1049,57 @@ pub async fn get_deposit_methods() {
     }
 }
 
+pub async fn get_deposit_status() {
+    println!("Fetching deposit status...");
+
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+    let asset = "XBT"; // Example asset
+    let method = "Bitcoin"; // Example deposit method
+
+    let request = client.get_deposit_status(asset).method(method.to_string());
+
+    match request.send().await {
+        Ok(deposit_statuses) => {
+            println!("Deposit statuses retrieved successfully:");
+            for status in deposit_statuses {
+                println!("Method: {}, Asset: {}, Reference ID: {}, TX ID: {}, Amount: {}, Time: {}, Status: {}",
+                         status.method, status.asset, status.refid, status.txid, status.amount, status.time, status.status);
+            }
+        },
+        Err(error) => {
+            eprintln!("Error retrieving deposit status: {:?}", error);
+        }
+    }
+}
+
+pub async fn get_deposit_addresses() {
+    println!("Fetching deposit addresses...");
+
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+    let asset = "XBT"; // Example asset
+    let method = "Bitcoin"; // Example deposit method
+
+    let request = client.get_deposit_addresses(asset, method);
+
+    match request.send().await {
+        Ok(deposit_addresses) => {
+            println!("Deposit addresses retrieved successfully:");
+            for address in deposit_addresses {
+                println!("Address: {}, Expire Time: {}, New: {:?}",
+                         address.address, address.expiretm, address.new);
+            }
+        },
+        Err(error) => {
+            eprintln!("Error retrieving deposit addresses: {:?}", error);
+        }
+    }
+}
+
+
 fn print_usage() {
     eprintln!("List of available functions for Kraken:");
     eprintln!("  get_account_balance - Test the account balance API");
@@ -1002,6 +1107,7 @@ fn print_usage() {
     eprintln!("  get_trade_history - Test trades history API");
     eprintln!("  get_web_sockets_token - Test WebSocket token retrieval");
     eprintln!("  get_withdrawal_addresses - Test withdrawal addresses retrieval");
+    eprintln!("  get_withdrawal_status - Test withdrawal status");
     eprintln!("  unstake_asset - Test asset unstaking");
     eprintln!("  get_trade_volume - Test trade volume retrieval");
     eprintln!("  query_orders_info - Test orders information query");
@@ -1020,6 +1126,7 @@ fn print_usage() {
     eprintln!("  get_tickers - Test tickers retrieval");
     eprintln!("  cancel_order_batch - Test batch order cancellation");
     eprintln!("  add_order - Test adding orders");
+    eprintln!("  add_order - Test editing orders");
     eprintln!("  verify_order - Verify adding orders");
     eprintln!("  cancel_all_orders - Test cancellation of all orders");
     eprintln!("  cancel_order - Test single order cancellation");
@@ -1027,4 +1134,8 @@ fn print_usage() {
     eprintln!("  get_assets - Test assets retrieval");
     eprintln!("  get_asset_pairs - Test asset pairs retrieval");
     eprintln!("  get_deposit_methods - Test deposit methods retrieval");
+    eprintln!("  get_deposit_status - Test deposit status");
+    eprintln!("  get_deposit_addresses - Test get_deposit_addresses");
 }
+
+
