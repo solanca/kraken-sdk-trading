@@ -1,4 +1,4 @@
-use kraken_rest_client::{Client as RestClient, Result as RestResult, *};
+/*use kraken_rest_client::{Client as RestClient, Result as RestResult, *};
 use kraken_futures_rest_client::{Client as FuturesClient, Result as FuturesResult};
 
 use std::env;
@@ -51,4 +51,4 @@ fn main() {
         "futures_get_instruments" => test_futures_get_instruments(&futures_client).unwrap(),
         _ => println!("Unknown function: {}", args[1]),
     }
-}
+}*/

@@ -12,3 +12,6 @@ edition = "2021"
 
 kraken_rest_client = "0.25.0"
 kraken_futures_rest_client = "0.25.0"
+tokio = { version = "1", features = ["full"] }
+reqwest = "0.12.4"
+serde = { version = "1.0", features = ["derive"] }
