@@ -1,6 +1,8 @@
 use kraken_rest_client::{Client as RestClient};
 use kraken_rest_client::api::get_ohlc_data::{Interval};
 use kraken_rest_client::types::pair_name::PairName;
+use kraken_rest_client::OrderSide;
+use kraken_rest_client::OrderType;
 
 use std::env;
 use dotenv::dotenv;
@@ -606,12 +608,69 @@ pub async fn get_tickers() {
     }   
 }
 
+// pub struct CancelOrderBatchResponse {
+//    pub count: u32,
+//    pub results: HashMap<String, CancelOrderBatchResult>,
+// }
+
 pub async fn cancel_order_batch() {
-    println!("Testing cancel_order_batch...");
+    println!("Canceling orders in batch...");
+
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+  
+    let txids: Vec<String> = vec!["OQCLML-7WKL3-PBVWWP".to_string(), "OQCLML-7WKL3-PBVWWQ".to_string()]; // Example order IDs to cancel
+
+    let request = client.cancel_order_batch(txids);
+
+    match request.send().await {
+        Ok(batch_result) => {
+            println!("Orders canceled in batch successfully.");
+            println!("Count: {}", batch_result.count);
+        }
+        Err(error) => {
+            eprintln!("Error canceling orders in batch: {:?}", error);
+        }
+    }
 }
 
+        //"market": Market order
+        //"limit": Limit order
+        //"stop-loss": Stop-loss order
+        //"take-profit": Take-profit order
+        //"stop-loss-limit": Stop-loss limit order
+        //"take-profit-limit": Take-profit limit order
+        //"settle-position": Settle position order
+
 pub async fn add_order() {
-    println!("Testing add_order...");
+    println!("Adding order...");
+
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+    let pair = "BTCUSD"; // Example trading pair
+    let side = OrderSide::Buy; // Example order side
+    let order_type = "limit"; // Example order type
+    let price = "28000"; // Example price
+    let volume = "0.00001"; // Example volume
+
+    let request = client
+    .add_order(pair, side, OrderType::Limit, volume)
+    .price(price)
+    .validate(true) // Validate the order before sending
+    .userref(12345); // Example user reference
+
+match request.send().await {
+    Ok(order_result) => {
+        println!("Order added successfully:");
+        println!("Description: {:?}", order_result.descr);
+        println!("Transaction IDs: {:?}", order_result.txid);
+    }
+    Err(error) => {
+        eprintln!("Error adding order: {:?}", error);
+    }
+}
 }
 
 /// Cancels all open orders on the Kraken API.
@@ -635,11 +694,64 @@ pub async fn cancel_all_orders() {
 
 
 pub async fn cancel_order() {
-    println!("Testing cancel_order...");
+    println!("Canceling order...");
+
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+   
+    let txid = "OQCLML-7WKL3-PBVWWP"; // Example order ID to cancel
+
+    let request = client.cancel_order(txid);
+
+    match request.send().await {
+        Ok(canceled_order) => {
+            println!("Order canceled successfully:");
+            println!("Count: {}", canceled_order.count);
+        }
+        Err(error) => {
+            eprintln!("Error canceling order: {:?}", error);
+        }
+    }
 }
 
+
 pub async fn get_closed_orders() {
-    println!("Testing get_closed_orders...");
+    println!("Fetching closed orders...");
+
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+    let request = client
+        .get_closed_orders()
+        .trades(true)
+        .start(1674000000) // Example start time (Unix timestamp)
+        .end(1674086400)   // Example end time (Unix timestamp)
+        .ofs(0);           // Example offset
+
+    match request.send().await {
+        Ok(closed_orders) => {
+            println!("Closed orders retrieved successfully:");
+            for (txid, order) in &closed_orders.closed {
+                println!("Order ID: {}", txid);
+                println!("  Status: {}", order.status);
+                println!("  Reason: {:?}", order.reason);
+                println!("  Open time: {}", order.opentm);
+                println!("  Close time: {}", order.closetm);
+                println!("  Expire time: {}", order.expiretm);
+                println!("  Volume: {}", order.vol);
+                println!("  Executed volume: {}", order.vol_exec);
+                println!("  Fee: {}", order.fee);
+                println!("  Limit price: {}", order.limitprice);
+                println!("  Misc: {}", order.misc);
+                println!();
+            }
+            println!("Count: {}", closed_orders.count);
+        }
+        Err(error) => {
+            eprintln!("Error retrieving closed orders: {:?}", error);
+        }
+    }
 }
 
 pub async fn get_assets() {
@@ -728,9 +840,41 @@ pub async fn get_asset_pairs() {
     }
 }
 
+// pub struct DepositMethods {
+//     pub method: String,
+//     pub fee: Option<String>,
+//     pub address_setup_fee: Option<String>,
+//     pub gen_address: Option<bool>,
+// }
+
 pub async fn get_deposit_methods() {
-    println!("Testing get_deposit_methods...");
+    println!("Fetching Deposit Methods...");
+
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+    let asset = "XBT"; // Example asset
+
+    let request = client.get_deposit_methods(asset);
+
+    match request.send().await {
+        Ok(deposit_methods) => {
+            println!("Deposit methods retrieved successfully:");
+            for method in deposit_methods {
+                println!("Method: {}", method.method);
+                println!("  Fee: {:?}", method.fee);
+                println!("  Address setup fee: {:?}", method.address_setup_fee);
+                println!("  Generate new address: {:?}", method.gen_address);
+                println!();
+            }
+        }
+        Err(error) => {
+            eprintln!("Error retrieving deposit methods: {:?}", error);
+        }
+    }
 }
+
+
 
 fn print_usage() {
     eprintln!("List of available functions for Kraken:");
