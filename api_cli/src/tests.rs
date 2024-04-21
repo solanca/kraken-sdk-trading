@@ -1,5 +1,10 @@
 // Test functions for the Kraken API CLI
 
+use kraken_rest_client::{Client as RestClient, Result as RestResult, *};
+use kraken_futures_rest_client::{Client as FuturesClient, Result as FuturesResult};
+
+use std::env;
+
 pub async fn get_account_balance() {
     println!("Testing get_account_balance...");
 }
@@ -66,6 +71,7 @@ pub async fn get_recent_trades() {
 
 pub async fn get_ohlc_data() {
     println!("Testing get_ohlc_data...");
+
 }
 
 pub async fn get_ledgers() {
