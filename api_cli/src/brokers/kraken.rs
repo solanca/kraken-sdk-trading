@@ -19,7 +19,7 @@ pub async fn handle_function(function_name: &str) {
     match function_name {
         "get_account_balance" => get_account_balance().await,
         "get_trade_balance" => get_trade_balance().await,
-        "get_trades_history" => get_trades_history().await,
+        "get_trade_history" => get_trade_history().await,
         "get_web_sockets_token" => get_web_sockets_token().await,
         "get_withdrawal_addresses" => get_withdrawal_addresses().await,
         "unstake_asset" => unstake_asset().await,
@@ -170,8 +170,8 @@ pub async fn get_trade_balance() {
 //     pub misc: String,
 // }
 
-pub async fn get_trades_history() {
-    println!("Testing get_trades_history...");
+pub async fn get_trade_history() {
+    println!("Testing get_trade_history...");
 
     let (api_key, api_secret) = load_api_credentials();
 
@@ -710,16 +710,16 @@ pub async fn add_order() {
     let (api_key, api_secret) = load_api_credentials();
     let client = RestClient::new(api_key, api_secret);
 
-    let pair = "BTCUSD"; // Example trading pair
+    let pair = "SOLGBP"; // Example trading pair
     let side = OrderSide::Buy; // Example order side
-    let order_type = "limit"; // Example order type
-    let price = "28000"; // Example price
-    let volume = "0.00001"; // Example volume
+    let order_type = OrderType::Limit; // Example order type
+    let price = "50"; // Example price
+    let volume = "0.5"; // Example volume
 
     let request = client
-    .add_order(pair, side, OrderType::Limit, volume)
+    .add_order(pair, side, order_type, volume)
     .price(price)
-    .validate(true) // Validate the order before sending
+    .validate(false) // Validate the order before sending - careful if this is false you will actually place an order!!!!
     .userref(12345); // Example user reference
 
 match request.send().await {
@@ -939,7 +939,7 @@ fn print_usage() {
     eprintln!("List of available functions for Kraken:");
     eprintln!("  get_account_balance - Test the account balance API");
     eprintln!("  get_trade_balance - Test the trade balance API");
-    eprintln!("  get_trades_history - Test trades history API");
+    eprintln!("  get_trade_history - Test trades history API");
     eprintln!("  get_web_sockets_token - Test WebSocket token retrieval");
     eprintln!("  get_withdrawal_addresses - Test withdrawal addresses retrieval");
     eprintln!("  unstake_asset - Test asset unstaking");
