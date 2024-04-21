@@ -330,11 +330,53 @@ pub async fn get_open_positions() {
 
 pub async fn get_system_status() {
     println!("Testing get_system_status...");
+
+
+    dotenv().ok();
+
+    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
+    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+
+    let client = RestClient::new(api_key, api_secret);
+    let request = client.get_system_status();
+
+    match request.send().await {
+        Ok(status) => {
+            println!("System status retrieved successfully:");
+            println!("Status: {}", status.status);
+            println!("Timestamp: {}", status.timestamp);
+        }
+        Err(error) => {
+            eprintln!("Error retrieving system status: {:?}", error);
+        }
+    }
 }
+
 
 pub async fn get_server_time() {
     println!("Testing get_server_time...");
+
+
+    dotenv().ok();
+
+    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
+    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+
+    let client = RestClient::new(api_key, api_secret);
+    let request = client.get_server_time();
+
+    match request.send().await {
+        Ok(time) => {
+            println!("Server time retrieved successfully:");
+            println!("Unix time: {}", time.unixtime);
+            println!("RFC 1123 time: {}", time.rfc1123);
+        }
+        Err(error) => {
+            eprintln!("Error retrieving server time: {:?}", error);
+        }
+    }
 }
+
 
 pub async fn get_open_orders() {
     println!("Testing get_open_orders...");
