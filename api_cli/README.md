@@ -1,19 +1,201 @@
-# Kraken CLI
+# Cryptocurrency Exchange API CLI
 
-A CLI for the Kraken Exchange.
+This command-line interface (CLI) allows you to interact with various cryptocurrency exchange APIs, including Kraken, Coinbase, KuCoin, and Binance. It provides a convenient way to test and execute different API functions for each exchange.
 
-## Status
+## Usage
 
-This work is under active development and the API is expected to change.
+To use the CLI, run the following command:
+
+```
+api_cli <broker> <function_name>
+```
+
+- `<broker>`: The name of the cryptocurrency exchange (e.g., `kraken`, `coinbase`, `kucoin`, `binance`).
+- `<function_name>`: The name of the API function you want to execute.
+
+## Available Brokers
+
+The CLI supports the following cryptocurrency exchanges:
+
+- Kraken
+- Coinbase
+- KuCoin
+- Binance
+
+## Kraken Functions
+
+The following functions are available for the Kraken exchange:
+
+- `get_account_balance`: Test the account balance API.
+- `get_trade_balance`: Test the trade balance API.
+- `get_trades_history`: Test trades history API.
+- `get_web_sockets_token`: Test WebSocket token retrieval.
+- `get_withdrawal_addresses`: Test withdrawal addresses retrieval.
+- `unstake_asset`: Test asset unstaking.
+- `get_trade_volume`: Test trade volume retrieval.
+- `query_orders_info`: Test orders information query.
+- `stake_asset`: Test asset staking.
+- `withdraw`: Test withdrawing funds.
+- `get_withdrawal_methods`: Test withdrawal methods retrieval.
+- `get_open_positions`: Test open positions retrieval.
+- `get_system_status`: Test system status check.
+- `get_server_time`: Test server time check.
+- `get_open_orders`: Test open orders retrieval.
+- `get_recent_trades`: Test recent trades retrieval.
+- `get_ohlc_data`: Test OHLC data retrieval.
+- `get_public_ohlc_data`: Test public OHLC data retrieval.
+- `get_ledgers`: Test ledgers retrieval.
+- `get_stakeable_assets`: Test stakeable assets retrieval.
+- `get_order_book`: Test order book retrieval.
+- `get_tickers`: Test tickers retrieval.
+- `cancel_order_batch`: Test batch order cancellation.
+- `add_order`: Test adding orders.
+- `cancel_all_orders`: Test cancellation of all orders.
+- `cancel_order`: Test single order cancellation.
+- `get_closed_orders`: Test closed orders retrieval.
+- `get_assets`: Test assets retrieval.
+- `get_asset_pairs`: Test asset pairs retrieval.
+- `get_deposit_methods`: Test deposit methods retrieval.
+
+## Coinbase Functions
+
+The following functions are available for the Coinbase exchange:
+
+- `get_account_balance`: Test the account balance API.
+- `get_trade_balance`: Test the trade balance API.
+- `get_trades_history`: Test trades history API.
+- `get_web_sockets_token`: Test WebSocket token retrieval.
+- `get_withdrawal_addresses`: Test withdrawal addresses retrieval.
+- `unstake_asset`: Test asset unstaking.
+- `get_trade_volume`: Test trade volume retrieval.
+- `query_orders_info`: Test orders information query.
+- `stake_asset`: Test asset staking.
+- `withdraw`: Test withdrawing funds.
+- `get_withdrawal_methods`: Test withdrawal methods retrieval.
+- `get_open_positions`: Test open positions retrieval.
+- `get_system_status`: Test system status check.
+- `get_server_time`: Test server time check.
+- `get_open_orders`: Test open orders retrieval.
+- `get_recent_trades`: Test recent trades retrieval.
+- `get_ohlc_data`: Test OHLC data retrieval.
+- `get_public_ohlc_data`: Test public OHLC data retrieval.
+- `get_ledgers`: Test ledgers retrieval.
+- `get_stakeable_assets`: Test stakeable assets retrieval.
+- `get_order_book`: Test order book retrieval.
+- `get_tickers`: Test tickers retrieval.
+- `cancel_order_batch`: Test batch order cancellation.
+- `add_order`: Test adding orders.
+- `cancel_all_orders`: Test cancellation of all orders.
+- `cancel_order`: Test single order cancellation.
+- `get_closed_orders`: Test closed orders retrieval.
+- `get_assets`: Test assets retrieval.
+- `get_asset_pairs`: Test asset pairs retrieval.
+- `get_deposit_methods`: Test deposit methods retrieval.
+
+## KuCoin Functions
+
+The following functions are available for the KuCoin exchange:
+
+- `get_account_balance`: Test the account balance API.
+- `get_trade_balance`: Test the trade balance API.
+- `get_trades_history`: Test trades history API.
+- `get_web_sockets_token`: Test WebSocket token retrieval.
+- `get_withdrawal_addresses`: Test withdrawal addresses retrieval.
+- `unstake_asset`: Test asset unstaking.
+- `get_trade_volume`: Test trade volume retrieval.
+- `query_orders_info`: Test orders information query.
+- `stake_asset`: Test asset staking.
+- `withdraw`: Test withdrawing funds.
+- `get_withdrawal_methods`: Test withdrawal methods retrieval.
+- `get_open_positions`: Test open positions retrieval.
+- `get_system_status`: Test system status check.
+- `get_server_time`: Test server time check.
+- `get_open_orders`: Test open orders retrieval.
+- `get_recent_trades`: Test recent trades retrieval.
+- `get_ohlc_data`: Test OHLC data retrieval.
+- `get_public_ohlc_data`: Test public OHLC data retrieval.
+- `get_ledgers`: Test ledgers retrieval.
+- `get_stakeable_assets`: Test stakeable assets retrieval.
+- `get_order_book`: Test order book retrieval.
+- `get_tickers`: Test tickers retrieval.
+- `cancel_order_batch`: Test batch order cancellation.
+- `add_order`: Test adding orders.
+- `cancel_all_orders`: Test cancellation of all orders.
+- `cancel_order`: Test single order cancellation.
+- `get_closed_orders`: Test closed orders retrieval.
+- `get_assets`: Test assets retrieval.
+- `get_asset_pairs`: Test asset pairs retrieval.
+- `get_deposit_methods`: Test deposit methods retrieval.
+
+## Binance Functions
+
+The following functions are available for the Binance exchange:
+
+- `get_account_balance`: Test the account balance API.
+- `get_trade_balance`: Test the trade balance API.
+- `get_trades_history`: Test trades history API.
+- `get_web_sockets_token`: Test WebSocket token retrieval.
+- `get_withdrawal_addresses`: Test withdrawal addresses retrieval.
+- `unstake_asset`: Test asset unstaking.
+- `get_trade_volume`: Test trade volume retrieval.
+- `query_orders_info`: Test orders information query.
+- `stake_asset`: Test asset staking.
+- `withdraw`: Test withdrawing funds.
+- `get_withdrawal_methods`: Test withdrawal methods retrieval.
+- `get_open_positions`: Test open positions retrieval.
+- `get_system_status`: Test system status check.
+- `get_server_time`: Test server time check.
+- `get_open_orders`: Test open orders retrieval.
+- `get_recent_trades`: Test recent trades retrieval.
+- `get_ohlc_data`: Test OHLC data retrieval.
+- `get_public_ohlc_data`: Test public OHLC data retrieval.
+- `get_ledgers`: Test ledgers retrieval.
+- `get_stakeable_assets`: Test stakeable assets retrieval.
+- `get_order_book`: Test order book retrieval.
+- `get_tickers`: Test tickers retrieval.
+- `cancel_order_batch`: Test batch order cancellation.
+- `add_order`: Test adding orders.
+- `cancel_all_orders`: Test cancellation of all orders.
+- `cancel_order`: Test single order cancellation.
+- `get_closed_orders`: Test closed orders retrieval.
+- `get_assets`: Test assets retrieval.
+- `get_asset_pairs`: Test asset pairs retrieval.
+- `get_deposit_methods`: Test deposit methods retrieval.
+
+## Examples
+
+Here are a few examples of how to use the CLI:
+
+- Retrieve account balance for Kraken:
+  ```
+  api_cli kraken get_account_balance
+  ```
+
+- Get recent trades for Coinbase:
+  ```
+  api_cli coinbase get_recent_trades
+  ```
+
+- Cancel all orders on KuCoin:
+  ```
+  api_cli kucoin cancel_all_orders
+  ```
+
+- Get OHLC data from Binance:
+  ```
+  api_cli binance get_ohlc_data
+  ```
+
+Please note that some functions may require additional authentication or configuration depending on the exchange's API requirements.
 
 ## Contributing
 
-Pull requests, issues and comments are welcome! Make sure to add tests for new features and bug fixes.
+If you would like to contribute to this project or add support for more exchanges and functions, please feel free to submit a pull request or open an issue on the project's repository.
 
 ## License
 
-This work is licensed under the Apache-2.0 License. See [LICENSE.txt](LICENSE.txt) or <https://spdx.org/licenses/Apache-2.0.html> for details.
+This project is licensed under whatever
 
 ## Copyright
 
-Copyright © 2023 [Georgios Moschovitis](https://gmosx.ninja).
+Copyright me and  © 2023 [Georgios Moschovitis](https://gmosx.ninja).
