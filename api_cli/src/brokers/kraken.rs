@@ -5,6 +5,12 @@ use kraken_rest_client::types::pair_name::PairName;
 use std::env;
 use dotenv::dotenv;
 
+fn load_api_credentials() -> (String, String) {
+    dotenv().ok();
+    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
+    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+    (api_key, api_secret)
+}
 
 
 pub async fn handle_function(function_name: &str) {
@@ -84,10 +90,7 @@ pub async fn get_public_ohlc_data() {
 pub async fn get_ohlc_data() {
     println!("Testing get_ohlc_data...");
 
-    dotenv().ok();
-
-    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
-    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+    let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
     let pair = PairName::from("XBT", "USD");
@@ -123,10 +126,7 @@ pub async fn get_ohlc_data() {
 pub async fn get_account_balance() {
     println!("Testing get_account_balance...");
 
-    dotenv().ok();
-
-    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
-    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+    let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
     let request = client.get_account_balance();
@@ -159,10 +159,7 @@ pub async fn get_account_balance() {
 pub async fn get_trade_balance() {
     println!("Testing get_trade_balance...");
 
-    dotenv().ok();
-
-    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
-    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+    let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
     let request = client.get_trade_balance();
@@ -211,10 +208,7 @@ pub async fn get_trade_balance() {
 pub async fn get_trades_history() {
     println!("Testing get_trades_history...");
 
-    dotenv().ok();
-
-    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
-    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+    let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
     let request = client.get_trades_history();
@@ -253,10 +247,7 @@ pub async fn get_trades_history() {
 pub async fn get_web_sockets_token() {
     println!("Testing get_web_sockets_token...");
 
-    dotenv().ok();
-
-    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
-    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+    let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
     let request = client.get_web_sockets_token();
@@ -288,10 +279,7 @@ pub async fn get_trade_volume() {
 pub async fn query_orders_info() {
     println!("Testing query_orders_info...");
 
-    dotenv().ok();
-
-    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
-    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+    let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
 
@@ -354,10 +342,7 @@ pub async fn get_withdrawal_methods() {
 pub async fn get_open_positions() {
     println!("Retrieving open positions with P&L calculations...");
 
-    dotenv().ok();
-
-    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
-    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+    let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
     let request = client.get_open_positions().docalcs(true);
@@ -401,10 +386,7 @@ pub async fn get_system_status() {
     println!("Testing get_system_status...");
 
 
-    dotenv().ok();
-
-    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
-    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+    let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
     let request = client.get_system_status();
@@ -426,10 +408,7 @@ pub async fn get_server_time() {
     println!("Testing get_server_time...");
 
 
-    dotenv().ok();
-
-    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
-    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+    let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
     let request = client.get_server_time();
@@ -451,10 +430,7 @@ pub async fn get_server_time() {
 pub async fn get_open_orders() {
     println!("Retrieving open orders...");
 
-    dotenv().ok(); // Ensure the environment variables are loaded
-
-    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
-    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+    let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
     let request = client.get_open_orders().trades(true); // Assuming you might want trade details by default
@@ -494,10 +470,7 @@ pub async fn get_open_orders() {
 pub async fn get_recent_trades() {
     println!("Retrieving recent trades for pair: BTC/USD");
 
-    dotenv().ok(); // Ensure the environment variables are loaded
-
-    let api_key = env::var("KRAKEN_API_KEY").expect("KRAKEN_API_KEY not set");
-    let api_secret = env::var("KRAKEN_API_SECRET").expect("KRAKEN_API_SECRET not set");
+    let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
     let request = client.get_recent_trades("BTC/USD");
@@ -529,9 +502,41 @@ pub async fn get_recent_trades() {
 }
 
 
+/// Retrieves ledger entries from the Kraken API, hardcoding for currency asset class and no specific filtering.
 pub async fn get_ledgers() {
-    println!("Testing get_ledgers...");
+    println!("Retrieving ledger entries...");
+
+    let (api_key, api_secret) = load_api_credentials();
+
+    let client = RestClient::new(api_key, api_secret);
+    let request = client.get_ledgers().aclass("currency");  // Hardcoded to fetch all currency class assets
+
+    match request.send().await {
+        Ok(response) => {
+            println!("Ledger entries retrieved successfully:");
+            for (entry_id, ledger_entry) in response.ledger {
+                println!(
+                    "Entry ID: {}, Ref ID: {}, Time: {}, Type: {}, Subtype: {}, Asset Class: {}, Asset: {}, Amount: {}, Fee: {}, Balance: {}",
+                    entry_id,
+                    ledger_entry.refid,
+                    ledger_entry.time,
+                    ledger_entry.ledger_type,
+                    ledger_entry.subtype,
+                    ledger_entry.aclass,
+                    ledger_entry.asset,
+                    ledger_entry.amount,
+                    ledger_entry.fee,
+                    ledger_entry.balance
+                );
+            }
+            println!("Total count of ledger entries retrieved: {}", response.count);
+        }
+        Err(e) => {
+            eprintln!("Failed to retrieve ledger entries: {}", e);
+        }
+    }
 }
+
 
 pub async fn get_stakeable_assets() {
     println!("Testing get_stakeable_assets...");
@@ -583,9 +588,25 @@ pub async fn add_order() {
     println!("Testing add_order...");
 }
 
+/// Cancels all open orders on the Kraken API.
 pub async fn cancel_all_orders() {
-    println!("Testing cancel_all_orders...");
+    println!("Attempting to cancel all open orders...");
+
+    let (api_key, api_secret) = load_api_credentials();
+
+    let client = RestClient::new(api_key, api_secret);
+    let request = client.cancel_all_orders();
+
+    match request.send().await {
+        Ok(response) => {
+            println!("Successfully cancelled orders. Total cancelled orders: {}", response.count);
+        }
+        Err(e) => {
+            eprintln!("Failed to cancel all orders: {}", e);
+        }
+    }
 }
+
 
 pub async fn cancel_order() {
     println!("Testing cancel_order...");
