@@ -339,15 +339,76 @@ pub async fn query_orders_info() {
 }
 
 pub async fn stake_asset() {
-    println!("Testing stake_asset...");
+    println!("Staking asset...");
+
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+    let asset = "XBT"; // Example asset to stake
+    let amount = "0.0001"; // Example amount to stake
+    let method = "XBT.M"; // Example staking method
+
+    let request = client.stake_asset(asset, amount, method);
+
+    match request.send().await {
+        Ok(stake_result) => {
+            println!("Asset staked successfully.");
+            println!("Refid: {}", stake_result.refid);
+        }
+        Err(error) => {
+            eprintln!("Error staking asset: {:?}", error);
+        }
+    }
 }
 
 pub async fn withdraw() {
-    println!("Testing withdraw...");
+    println!("Withdrawing funds...");
+
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+    let asset = "XBT"; // Example asset to withdraw
+    let key = "my_withdrawal_key"; // Example withdrawal key
+    let amount = "0.1"; // Example amount to withdraw
+
+    let request = client.withdraw(asset, key, amount);
+
+    match request.send().await {
+        Ok(withdraw_result) => {
+            println!("Withdrawal successful.");
+            println!("Refid: {}", withdraw_result.refid);
+        }
+        Err(error) => {
+            eprintln!("Error withdrawing funds: {:?}", error);
+        }
+    }
 }
 
 pub async fn get_withdrawal_methods() {
-    println!("Testing get_withdrawal_methods...");
+    println!("Fetching withdrawal methods...");
+
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+    let asset = "XBT"; // Example asset
+
+    let request = client.get_withdrawal_methods().asset(asset);
+
+    match request.send().await {
+        Ok(methods) => {
+            println!("Withdrawal methods retrieved successfully:");
+            for method in methods {
+                println!("Method: {}", method.method);
+                println!("  Asset: {}", method.asset);
+                println!("  Network: {}", method.network);
+                println!("  Minimum: {}", method.minimum);
+                println!();
+            }
+        }
+        Err(error) => {
+            eprintln!("Error retrieving withdrawal methods: {:?}", error);
+        }
+    }
 }
 
 /// Retrieves the open positions from the Kraken API, always including P&L calculations.
