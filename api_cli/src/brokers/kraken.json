@@ -1,0 +1,388 @@
+{
+  "name": "kraken",
+  "version": "1.0",
+  "author": "Your Name <your_email@example.com>",
+  "about": "CLI to interact with Kraken",
+  "commands": [
+    {
+      "name": "get_account_balance",
+      "description": "Retrieves the account balance",
+      "arguments": []
+    },
+    {
+      "name": "get_trade_balance",
+      "description": "Retrieves the trade balance",
+      "arguments": []
+    },
+    {
+      "name": "get_trade_history",
+      "description": "Retrieves trade history",
+      "arguments": []
+    },
+    {
+      "name": "get_web_sockets_token",
+      "description": "Retrieves web sockets token",
+      "arguments": []
+    },
+    {
+      "name": "get_withdrawal_addresses",
+      "description": "Retrieves withdrawal addresses",
+      "arguments": [
+        {
+          "name": "asset",
+          "description": "The asset to filter by (e.g., XBT)"
+        },
+        {
+          "name": "aclass",
+          "description": "The asset class to filter by (e.g., currency)"
+        },
+        {
+          "name": "method",
+          "description": "The withdrawal method to filter by (e.g., Bitcoin)"
+        }
+      ]
+    },
+    {
+      "name": "get_withdrawal_status",
+      "description": "Checks the status of a withdrawal",
+      "arguments": []
+    },
+    {
+      "name": "unstake_asset",
+      "description": "Unstakes an asset",
+      "arguments": []
+    },
+    {
+      "name": "get_trade_volume",
+      "description": "Retrieves trade volume",
+      "arguments": [
+        {
+          "name": "pair",
+          "description": "The trading pair (e.g., XBTUSD)"
+        }
+      ]
+    },
+    {
+      "name": "query_orders_info",
+      "description": "Queries orders information",
+      "arguments": [
+        {
+          "name": "txids",
+          "description": "Comma-separated list of transaction IDs"
+        },
+        {
+          "name": "trades",
+          "description": "Whether to include trade details (true or false)"
+        }
+      ]
+    },
+    {
+      "name": "stake_asset",
+      "description": "Stakes an asset",
+      "arguments": [
+        {
+          "name": "asset",
+          "description": "The asset to stake (e.g., XBT)"
+        },
+        {
+          "name": "amount",
+          "description": "The amount to stake (e.g., 0.0001)"
+        },
+        {
+          "name": "method",
+          "description": "The staking method (e.g., XBT.M)"
+        }
+      ]
+    },
+    {
+      "name": "withdraw",
+      "description": "Processes a withdrawal",
+      "arguments": [
+        {
+          "name": "asset",
+          "description": "The asset to withdraw (e.g., XBT)"
+        },
+        {
+          "name": "key",
+          "description": "The withdrawal key (e.g., my_withdrawal_key)"
+        },
+        {
+          "name": "amount",
+          "description": "The amount to withdraw (e.g., 0.1)"
+        }
+      ]
+    },
+    {
+      "name": "get_withdrawal_methods",
+      "description": "Retrieves withdrawal methods",
+      "arguments": [
+        {
+          "name": "asset",
+          "description": "The asset to filter by (e.g., XBT)"
+        }
+      ]
+    },
+    {
+      "name": "get_open_positions",
+      "description": "Retrieves open positions",
+      "arguments": []
+    },
+    {
+      "name": "get_system_status",
+      "description": "Checks the system status",
+      "arguments": []
+    },
+    {
+      "name": "get_server_time",
+      "description": "Retrieves the server time",
+      "arguments": []
+    },
+    {
+      "name": "get_open_orders",
+      "description": "Retrieves open orders",
+      "arguments": [
+        {
+          "name": "trades",
+          "description": "Whether to include trade details (true or false)"
+        }
+      ]
+    },
+    {
+      "name": "get_recent_trades",
+      "description": "Retrieves recent trades",
+      "arguments": [
+        {
+          "name": "pair",
+          "description": "The trading pair (e.g., BTC/USD)"
+        }
+      ]
+    },
+    {
+      "name": "get_public_ohlc_data",
+      "description": "Retrieves public OHLC data",
+      "arguments": [
+        {
+          "name": "base",
+          "description": "The trading pair (e.g., XBT/USD)"
+        },
+        {
+          "name": "quote",
+          "description": "The trading pair (e.g., XBT/USD)"
+        },
+        {
+          "name": "interval",
+          "description": "The time interval (e.g., Min1, Min5, Hour1, etc.)"
+        }
+      ]
+    },
+    {
+      "name": "get_ledgers",
+      "description": "Retrieves ledger entries",
+      "arguments": [
+        {
+          "name": "aclass",
+          "description": "The asset class to filter by (e.g., currency)"
+        }
+      ]
+    },
+    {
+      "name": "get_stakeable_assets",
+      "description": "Retrieves stakeable assets",
+      "arguments": []
+    },
+    {
+      "name": "get_order_book",
+      "description": "Retrieves the order book",
+      "arguments": [
+        {
+          "name": "pair",
+          "description": "The trading pair (e.g., XXBTZUSD)"
+        },
+        {
+          "name": "count",
+          "description": "The maximum number of asks/bids to retrieve"
+        }
+      ]
+    },
+    {
+      "name": "get_tickers",
+      "description": "Retrieves tickers",
+      "arguments": [
+        {
+          "name": "pairs",
+          "description": "Comma-separated list of trading pairs (e.g., XXBTZUSD,DOTUSD)"
+        }
+      ]
+    },
+    {
+      "name": "cancel_order_batch",
+      "description": "Cancels a batch of orders",
+      "arguments": [
+        {
+          "name": "txids",
+          "description": "Comma-separated list of transaction IDs to cancel"
+        }
+      ]
+    },
+    {
+      "name": "add_order",
+      "description": "Adds a new order",
+      "arguments": [
+        {
+          "name": "pair",
+          "description": "The trading pair (e.g., SOLGBP)"
+        },
+        {
+          "name": "side",
+          "description": "The order side (buy or sell)"
+        },
+        {
+          "name": "type",
+          "description": "The order type (limit, market, etc.)"
+        },
+        {
+          "name": "price",
+          "description": "The order price (e.g., 50)"
+        },
+        {
+          "name": "volume",
+          "description": "The order volume (e.g., 0.5)"
+        }
+      ]
+    },
+    {
+      "name": "edit_order",
+      "description": "Edits an existing order",
+      "arguments": [
+        {
+          "name": "txid",
+          "description": "The transaction ID of the order to edit"
+        },
+        {
+          "name": "price",
+          "description": "The new order price"
+        },
+        {
+          "name": "volume",
+          "description": "The new order volume"
+        }
+      ]
+    },
+    {
+      "name": "verify_order",
+      "description": "Verifies an order",
+      "arguments": [
+        {
+          "name": "pair",
+          "description": "The trading pair (e.g., SOLGBP)"
+        },
+        {
+          "name": "side",
+          "description": "The order side (buy or sell)"
+        },
+        {
+          "name": "type",
+          "description": "The order type (limit, market, etc.)"
+        },
+        {
+          "name": "price",
+          "description": "The order price (e.g., 50)"
+        },
+        {
+          "name": "volume",
+          "description": "The order volume (e.g., 0.5)"
+        }
+      ]
+    },
+    {
+      "name": "cancel_all_orders",
+      "description": "Cancels all orders",
+      "arguments": []
+    },
+    {
+      "name": "cancel_order",
+      "description": "Cancels a specific order",
+      "arguments": [
+        {
+          "name": "txid",
+          "description": "The transaction ID of the order to cancel"
+        }
+      ]
+    },
+    {
+      "name": "get_closed_orders",
+      "description": "Retrieves closed orders",
+      "arguments": [
+        {
+          "name": "trades",
+          "description": "Whether to include trade details (true or false)"
+        },
+        {
+          "name": "start",
+          "description": "Start time (Unix timestamp)"
+        },
+        {
+          "name": "end",
+          "description": "End time (Unix timestamp)"
+        },
+        {
+          "name": "ofs",
+          "description": "Offset for pagination"
+        }
+      ]
+    },
+    {
+      "name": "get_assets",
+      "description": "Retrieves assets",
+      "arguments": [
+        {
+          "name": "assets",
+          "description": "Comma-separated list of assets to retrieve (e.g., XBT,ETH,USDT)"
+        }
+      ]
+    },
+    {
+      "name": "get_asset_pairs",
+      "description": "Retrieves asset pairs",
+      "arguments": []
+    },
+    {
+      "name": "get_deposit_methods",
+      "description": "Retrieves deposit methods",
+      "arguments": [
+        {
+          "name": "asset",
+          "description": "The asset to filter by (e.g., XBT)"
+        }
+      ]
+    },
+    {
+      "name": "get_deposit_status",
+      "description": "Checks the status of deposits",
+      "arguments": [
+        {
+          "name": "asset",
+          "description": "The asset to filter by (e.g., XBT)"
+        },
+        {
+          "name": "method",
+          "description": "The deposit method to filter by (e.g., Bitcoin)"
+        }
+      ]
+    },
+    {
+      "name": "get_deposit_addresses",
+      "description": "Retrieves deposit addresses",
+      "arguments": [
+        {
+          "name": "asset",
+          "description": "The asset (e.g., XBT)"
+        },
+        {
+          "name": "method",
+          "description": "The deposit method (e.g., Bitcoin)"
+        }
+      ]
+    }
+  ]
+}

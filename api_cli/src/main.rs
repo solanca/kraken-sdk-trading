@@ -1,49 +1,73 @@
+mod brokers;
+
+use serde_json::Value;
+use std::collections::HashMap;
 use std::env;
 use std::fs;
-use std::process;
 
-mod brokers {
-    pub mod kraken;
-    pub mod coinbase;
-    pub mod kucoin;
-    pub mod binance;
+fn generate_usage(command: &Value) -> String {
+    let args_usage: Vec<String> = command["arguments"].as_array().unwrap_or(&vec![])
+        .iter()
+        .map(|arg| {
+            let name = arg["name"].as_str().unwrap();
+            format!("--{} <{}>", name, name)
+        })
+        .collect();
+    format!("Usage: {} {}", command["name"].as_str().unwrap(), args_usage.join(" "))
 }
 
-#[tokio::main]
-async fn main() {
+fn generate_help_for_broker(commands: &[Value]) -> String {
+    commands.iter().map(generate_usage).collect::<Vec<String>>().join("\n")
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
-    if args.len() < 3 {
-        eprintln!("Usage: {} <broker> <function_name>", args[0]);
-        eprintln!("Available brokers:");
-        print_available_brokers();
-        process::exit(1);
+    if args.len() < 2 {
+        println!("Usage: {} <broker> [command] [arguments...]", args[0]);
+        println!("Available brokers: binance, coinbase, kraken, kucoin");
+        return Ok(());
     }
 
     let broker = &args[1];
-    let function_name = &args[2];
+    let configs = brokers::load_configs()?;
+    let config = configs.get(broker).expect("Broker configuration not found");
 
-    match broker.as_str() {
-        "kraken" => brokers::kraken::handle_function(function_name).await,
-        "coinbase" => brokers::coinbase::handle_function(function_name).await,
-        "kucoin" => brokers::kucoin::handle_function(function_name).await,
-        "binance" => brokers::binance::handle_function(function_name).await,
-        _ => {
-            eprintln!("Broker '{}' not recognized.", broker);
-            process::exit(1);
+    if args.len() == 2 {
+        println!("Available commands for {}:", broker);
+        if let Some(commands) = config["commands"].as_array() {
+            println!("{}", generate_help_for_broker(commands));
+        } else {
+            println!("No commands available for this broker.");
         }
+        return Ok(());
     }
-}
 
-fn print_available_brokers() {
-    let brokers_dir = fs::read_dir("src/brokers").unwrap();
-    for entry in brokers_dir {
-        if let Ok(entry) = entry {
-            if let Some(file_name) = entry.file_name().to_str() {
-                if file_name.ends_with(".rs") && file_name != "mod.rs" {
-                    let broker_name = &file_name[..file_name.len() - 3];
-                    eprintln!("  {}", broker_name);
-                }
+    let command_name = args[2].trim_start_matches('-');
+    let command_args: Vec<String> = args.iter()
+        .skip(3)
+        .filter_map(|arg| {
+            if !arg.starts_with("--") {
+                Some(arg.clone())
+            } else {
+                None
             }
+        })
+        .collect();
+
+    println!("All arguments received main: {:?}", command_args);
+
+    if let Some(command) = config["commands"].as_array().unwrap().iter().find(|&cmd| cmd["name"].as_str().map(|name| name.trim_start_matches('-')) == Some(command_name)) {
+        if command_args.len() != command["arguments"].as_array().unwrap().len() {
+            println!("Incorrect number of arguments. {}", generate_usage(command));
+            return Ok(());
         }
+        if let Err(e) = brokers::kraken::execute_command(command, &command_args) {
+            eprintln!("Error executing command: {}", e);
+            return Err(e.into());
+        }
+    } else {
+        println!("Command '{}' not found. Available commands:\n{}", command_name, generate_help_for_broker(config["commands"].as_array().unwrap()));
     }
+
+    Ok(())
 }

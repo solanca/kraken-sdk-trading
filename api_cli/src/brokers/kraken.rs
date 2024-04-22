@@ -3,7 +3,7 @@ use kraken_rest_client::api::get_ohlc_data::{Interval};
 use kraken_rest_client::types::pair_name::PairName;
 use kraken_rest_client::OrderSide;
 use kraken_rest_client::OrderType;
-
+use tokio::runtime::Runtime;
 use std::env;
 use dotenv::dotenv;
 
@@ -14,60 +14,95 @@ fn load_api_credentials() -> (String, String) {
     (api_key, api_secret)
 }
 
-
-pub async fn handle_function(function_name: &str) {
-    match function_name {
-        "get_account_balance" => get_account_balance().await,
-        "get_trade_balance" => get_trade_balance().await,
-        "get_trade_history" => get_trade_history().await,
-        "get_web_sockets_token" => get_web_sockets_token().await,
-        "get_withdrawal_addresses" => get_withdrawal_addresses().await,
-        "get_withdrawal_status" => get_withdrawal_status().await,
-        "unstake_asset" => unstake_asset().await,
-        "get_trade_volume" => get_trade_volume().await,
-        "query_orders_info" => query_orders_info().await,
-        "stake_asset" => stake_asset().await,
-        "withdraw" => withdraw().await,
-        "get_withdrawal_methods" => get_withdrawal_methods().await,
-        "get_open_positions" => get_open_positions().await,
-        "get_system_status" => get_system_status().await,
-        "get_server_time" => get_server_time().await,
-        "get_open_orders" => get_open_orders().await,
-        "get_recent_trades" => get_recent_trades().await,
-        "get_public_ohlc_data" => get_public_ohlc_data().await,
-        "get_ledgers" => get_ledgers().await,
-        "get_stakeable_assets" => get_stakeable_assets().await,
-        "get_order_book" => get_order_book().await,
-        "get_tickers" => get_tickers().await,
-        "cancel_order_batch" => cancel_order_batch().await,
-        "add_order" => add_order().await,
-        "edit_order" => edit_order().await,
-        "verify_order" => verify_order().await,
-        "cancel_all_orders" => cancel_all_orders().await,
-        "cancel_order" => cancel_order().await,
-        "get_closed_orders" => get_closed_orders().await,
-        "get_assets" => get_assets().await,
-        "get_asset_pairs" => get_asset_pairs().await,
-        "get_deposit_methods" => get_deposit_methods().await,
-        "get_deposit_status" => get_deposit_status().await,
-        "get_deposit_addresses" => get_deposit_addresses().await,
+pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(), String> {
+    let handler = command["name"].as_str().unwrap();
+    println!("All arguments received execute: {:?}", args);
+    match handler {
+        "get_account_balance" => {
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_account_balance()).expect("Failed to retrieve account balance");
+            Ok(())
+        }
+        "get_trade_balance" => {
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_trade_balance()).expect("Failed to retrieve trade balance");
+            Ok(())
+        }
+        "get_trade_history" => {
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_trade_history()).expect("Failed to retrieve trade history");
+            Ok(())
+        }
+        "cancel_all_orders" => {
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(cancel_all_orders())
+        }
+        "get_public_ohlc_data" => {
+            println!("All arguments received: {:?}", args);
+            let base = args.get(0).expect("Missing argument: base");
+            let quote = args.get(1).expect("Missing argument: quote");
+            let interval = match args.get(2).expect("Missing argument: interval").as_str() {
+                "1" | "1m" | "1min" => Interval::Min1,
+                "5" | "5m" | "5min" => Interval::Min5,
+                "15" | "15m" | "15min" => Interval::Min15,
+                "30" | "30m" | "30min" => Interval::Min30,
+                "60" | "1h" | "60min" => Interval::Hour1,
+                "240" | "4h" | "240min" => Interval::Hour4,
+                "1440" | "1d" | "24h" | "day" => Interval::Day1,
+                "10080" | "7d" | "1w" | "week" => Interval::Day7,
+                "21600" | "15d" => Interval::Day15,
+                _ => return Err("Invalid interval. Supported intervals: 1m, 5m, 15m, 30m, 1h, 4h, 1d, 7d, 15d".to_string()),
+            };
+        
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_public_ohlc_data(base, quote, interval))
+        }
+        
+        "verify_order" => {
+            let pair = args.get(0).expect("Missing argument: pair");
+            let side = match args.get(1).expect("Missing argument: side").as_str() {
+                "buy" => OrderSide::Buy,
+                "sell" => OrderSide::Sell,
+                _ => return Err("Invalid order side. Expected 'buy' or 'sell'.".to_string()),
+            };
+            let order_type = match args.get(2).expect("Missing argument: type").as_str() {
+                "limit" => OrderType::Limit,
+                "market" => OrderType::Market,
+                // Add more order types as needed
+                _ => return Err("Invalid order type.".to_string()),
+            };
+            let price = args.get(3).expect("Missing argument: price");
+            let volume = args.get(4).expect("Missing argument: volume");
+        
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(verify_order(pair, side, order_type, price, volume))
+        }
+        "get_web_sockets_token" => {
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            match rt.block_on(get_web_sockets_token()) {
+                Ok(_) => Ok(()),
+                Err(e) => {
+                    eprintln!("{}", e);
+                    Err(e)
+                }
+            }
+        }
         _ => {
-            eprintln!("Function '{}' not recognized for Kraken.", function_name);
-            print_usage();
-            std::process::exit(1);
+            println!("Executing {} with arguments {:?}", handler, args);
+            // Simulated handler execution
+            Ok(())
         }
     }
 }
 
-pub async fn get_public_ohlc_data() {
-    println!("Testing get_public_ohlc_data...");
+pub async fn get_public_ohlc_data(base: &str, quote: &str, interval: Interval) -> Result<(), String> {
+    let pair = format!("{}/{}", base, quote); // This line constructs the pair string if needed for display or other uses
+    println!("Fetching public OHLC data for pair: {}", pair);
 
     let client = RestClient::default();
-    let pair = PairName::from("XBT", "USD");
-    let interval = Interval::Min1;
-
+    let pair_name = PairName::from(base, quote);
     let request = client
-        .get_ohlc_data(&pair)
+        .get_ohlc_data(&pair_name)
         .interval(interval);
 
     match request.send().await {
@@ -77,23 +112,27 @@ pub async fn get_public_ohlc_data() {
                 println!(
                     "Time: {}, Open: {}, High: {}, Low: {}, Close: {}, VWAP: {}, Volume: {}, Count: {}",
                     data.time(),
+                    data.open(),
                     data.high(),
                     data.low(),
-                    data.open(),
                     data.close(),
                     data.vwap(),
                     data.volume(),
                     data.count()
                 );
             }
-        }
+            Ok(())
+        },
         Err(error) => {
-            eprintln!("Error retrieving OHLC data: {:?}", error);
+            let error_message = format!("Error retrieving OHLC data: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
 
-pub async fn get_account_balance() {
+
+pub async fn get_account_balance() -> Result<(), String> {
     println!("Testing get_account_balance...");
 
     let (api_key, api_secret) = load_api_credentials();
@@ -106,12 +145,13 @@ pub async fn get_account_balance() {
             for (key, value) in account_balance {
                 println!("{}: {}", key, value);
             }
+            Ok(())
         }
         Err(error) => {
             eprintln!("Error retrieving account balance: {:?}", error);
+            Err(format!("Error retrieving account balance: {:?}", error))
         }
     }
-
 }
 
 // pub struct GetTradeBalanceResponse {
@@ -126,7 +166,7 @@ pub async fn get_account_balance() {
 //     pub margin_level: Option<String>,
 // }
 
-pub async fn get_trade_balance() {
+pub async fn get_trade_balance() -> Result<(), String> {
     println!("Testing get_trade_balance...");
 
     let (api_key, api_secret) = load_api_credentials();
@@ -148,9 +188,11 @@ pub async fn get_trade_balance() {
             if let Some(margin_level) = trade_balance.margin_level {
                 println!("Margin level: {}", margin_level);
             }
+            Ok(())
         }
         Err(error) => {
             eprintln!("Error retrieving trade balance: {:?}", error);
+            Err(format!("Error retrieving trade balance: {:?}", error))
         }
     }
 }
@@ -175,7 +217,7 @@ pub async fn get_trade_balance() {
 //     pub misc: String,
 // }
 
-pub async fn get_trade_history() {
+pub async fn get_trade_history() -> Result<(), String> {
     println!("Testing get_trade_history...");
 
     let (api_key, api_secret) = load_api_credentials();
@@ -202,9 +244,11 @@ pub async fn get_trade_history() {
                 println!();
             }
             println!("Count: {}", trades_history.count);
+            Ok(())
         }
         Err(error) => {
             eprintln!("Error retrieving trades history: {:?}", error);
+            Err(format!("Error retrieving trades history: {:?}", error))
         }
     }
 }
@@ -214,8 +258,7 @@ pub async fn get_trade_history() {
 //    pub expires: i64,
 //}
 
-/// Retrieves a WebSocket token from the Kraken API for authenticating WebSocket connections.
-pub async fn get_web_sockets_token() {
+pub async fn get_web_sockets_token() -> Result<(), String> {
     println!("Retrieving WebSocket token...");
 
     let (api_key, api_secret) = load_api_credentials();
@@ -227,9 +270,16 @@ pub async fn get_web_sockets_token() {
         Ok(response) => {
             println!("WebSocket token retrieved successfully:");
             println!("Token: {}, Expires in: {} seconds", response.token, response.expires);
+            Ok(())
         }
         Err(e) => {
-            eprintln!("Failed to retrieve WebSocket token: {}", e);
+            if e.to_string().contains("Permission denied") {
+                eprintln!("Permission denied while retrieving WebSocket token: {}", e);
+                Err(format!("Permission denied while retrieving WebSocket token: {}", e))
+            } else {
+                eprintln!("Failed to retrieve WebSocket token: {}", e);
+                Err(format!("Failed to retrieve WebSocket token: {}", e))
+            }
         }
     }
 }
@@ -794,17 +844,11 @@ pub async fn add_order() {
 }
 }
 
-pub async fn verify_order() {
+pub async fn verify_order(pair: &str, side: OrderSide, order_type: OrderType, price: &str, volume: &str) -> Result<(), String> {
     println!("Verifying order...");
 
     let (api_key, api_secret) = load_api_credentials();
     let client = RestClient::new(api_key, api_secret);
-
-    let pair = "SOLGBP"; // Example trading pair
-    let side = OrderSide::Buy; // Example order side
-    let order_type = OrderType::Limit; // Example order type
-    let price = "50"; // Example price
-    let volume = "0.5"; // Example volume
 
     let request = client
         .add_order(pair, side, order_type, volume)
@@ -815,12 +859,15 @@ pub async fn verify_order() {
         Ok(order_result) => {
             println!("Order verified successfully:");
             println!("Description: {:?}", order_result.descr);
-        },
+            Ok(())
+        }
         Err(error) => {
             eprintln!("Error verifying order: {:?}", error);
+            Err(format!("Error verifying order: {:?}", error))
         }
     }
 }
+
 
 pub async fn edit_order() {
     println!("Editing order...");
@@ -849,7 +896,7 @@ pub async fn edit_order() {
 }
 
 /// Cancels all open orders on the Kraken API.
-pub async fn cancel_all_orders() {
+pub async fn cancel_all_orders() -> Result<(), String> {
     println!("Attempting to cancel all open orders...");
 
     let (api_key, api_secret) = load_api_credentials();
@@ -860,9 +907,11 @@ pub async fn cancel_all_orders() {
     match request.send().await {
         Ok(response) => {
             println!("Successfully cancelled orders. Total cancelled orders: {}", response.count);
+            Ok(())
         }
         Err(e) => {
             eprintln!("Failed to cancel all orders: {}", e);
+            Err(format!("Failed to cancel all orders: {}", e))
         }
     }
 }
@@ -1098,44 +1147,3 @@ pub async fn get_deposit_addresses() {
         }
     }
 }
-
-
-fn print_usage() {
-    eprintln!("List of available functions for Kraken:");
-    eprintln!("  get_account_balance - Test the account balance API");
-    eprintln!("  get_trade_balance - Test the trade balance API");
-    eprintln!("  get_trade_history - Test trades history API");
-    eprintln!("  get_web_sockets_token - Test WebSocket token retrieval");
-    eprintln!("  get_withdrawal_addresses - Test withdrawal addresses retrieval");
-    eprintln!("  get_withdrawal_status - Test withdrawal status");
-    eprintln!("  unstake_asset - Test asset unstaking");
-    eprintln!("  get_trade_volume - Test trade volume retrieval");
-    eprintln!("  query_orders_info - Test orders information query");
-    eprintln!("  stake_asset - Test asset staking");
-    eprintln!("  withdraw - Test withdrawing funds");
-    eprintln!("  get_withdrawal_methods - Test withdrawal methods retrieval");
-    eprintln!("  get_open_positions - Test open positions retrieval");
-    eprintln!("  get_system_status - Test system status check");
-    eprintln!("  get_server_time - Test server time check");
-    eprintln!("  get_open_orders - Test open orders retrieval");
-    eprintln!("  get_recent_trades - Test recent trades retrieval");
-    eprintln!("  get_public_ohlc_data - Test public OHLC data retrieval");
-    eprintln!("  get_ledgers - Test ledgers retrieval");
-    eprintln!("  get_stakeable_assets - Test stakeable assets retrieval");
-    eprintln!("  get_order_book - Test order book retrieval");
-    eprintln!("  get_tickers - Test tickers retrieval");
-    eprintln!("  cancel_order_batch - Test batch order cancellation");
-    eprintln!("  add_order - Test adding orders");
-    eprintln!("  add_order - Test editing orders");
-    eprintln!("  verify_order - Verify adding orders");
-    eprintln!("  cancel_all_orders - Test cancellation of all orders");
-    eprintln!("  cancel_order - Test single order cancellation");
-    eprintln!("  get_closed_orders - Test closed orders retrieval");
-    eprintln!("  get_assets - Test assets retrieval");
-    eprintln!("  get_asset_pairs - Test asset pairs retrieval");
-    eprintln!("  get_deposit_methods - Test deposit methods retrieval");
-    eprintln!("  get_deposit_status - Test deposit status");
-    eprintln!("  get_deposit_addresses - Test get_deposit_addresses");
-}
-
-
