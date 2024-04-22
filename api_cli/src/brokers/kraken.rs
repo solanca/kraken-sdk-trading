@@ -33,9 +33,32 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
             rt.block_on(get_trade_history()).expect("Failed to retrieve trade history");
             Ok(())
         }
+        "get_trade_volume" => {
+            let pair = args.get(0).expect("Missing argument: pair");
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_trade_volume(pair))
+        }
         "cancel_all_orders" => {
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
             rt.block_on(cancel_all_orders())
+        }
+        "add_order" => {
+            let pair = args.get(0).expect("Missing argument: pair");
+            let side = args.get(1).expect("Missing argument: side");
+            let order_type = args.get(2).expect("Missing argument: type");
+            let price = args.get(3).expect("Missing argument: price");
+            let volume = args.get(4).expect("Missing argument: volume");
+        
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(add_order(pair, side, order_type, price, volume))
+        }
+        "get_system_status" => {
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_system_status())
+        }
+        "get_server_time" => {
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_server_time())
         }
         "get_public_ohlc_data" => {
             println!("All arguments received: {:?}", args);
@@ -61,13 +84,13 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
         "verify_order" => {
             let pair = args.get(0).expect("Missing argument: pair");
             let side = match args.get(1).expect("Missing argument: side").as_str() {
-                "buy" => OrderSide::Buy,
-                "sell" => OrderSide::Sell,
+                "buy" => "buy",
+                "sell" => "sell",
                 _ => return Err("Invalid order side. Expected 'buy' or 'sell'.".to_string()),
             };
             let order_type = match args.get(2).expect("Missing argument: type").as_str() {
-                "limit" => OrderType::Limit,
-                "market" => OrderType::Market,
+                "limit" => "limit",
+                "market" => "market",
                 // Add more order types as needed
                 _ => return Err("Invalid order type.".to_string()),
             };
@@ -96,11 +119,13 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
 }
 
 pub async fn get_public_ohlc_data(base: &str, quote: &str, interval: Interval) -> Result<(), String> {
-    let pair = format!("{}/{}", base, quote); // This line constructs the pair string if needed for display or other uses
+    let base_upper = base.to_uppercase();
+    let quote_upper = quote.to_uppercase();
+    let pair = format!("{}{}", base_upper, quote_upper);
     println!("Fetching public OHLC data for pair: {}", pair);
 
     let client = RestClient::default();
-    let pair_name = PairName::from(base, quote);
+    let pair_name = PairName::from(&base_upper, &quote_upper);
     let request = client
         .get_ohlc_data(&pair_name)
         .interval(interval);
@@ -316,29 +341,30 @@ pub async fn unstake_asset() {
     println!("Testing unstake_asset...");
 }
 
-pub async fn get_trade_volume() {
-    println!("Testing get_trade_volume...");
+pub async fn get_trade_volume(pair: &str) -> Result<(), String> {
+    println!("Fetching trade volume for pair: {}", pair);
 
     let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
-    let pair = "XBTUSD";  // Hardcoded pair, adjust as necessary
-    let request = client.get_trade_volume(pair);  // Correctly supplying the required parameter
+    let request = client.get_trade_volume(pair);
 
     match request.send().await {
         Ok(trade_volume) => {
             println!("Trade volume retrieved successfully:");
             println!("Currency: {}", trade_volume.currency);
             println!("Volume: {}", trade_volume.volume);
-            println!("Fees: {:?}", trade_volume.fees);  // Use debug formatting for HashMap
-            println!("Maker Fees: {:?}", trade_volume.fees_maker);  // Use debug formatting for HashMap
+            println!("Fees: {:?}", trade_volume.fees);
+            println!("Maker Fees: {:?}", trade_volume.fees_maker);
+            Ok(())
         }
         Err(error) => {
-            eprintln!("Error retrieving trade volume: {:?}", error);
+            let error_message = format!("Error retrieving trade volume: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
-
 
 
 
@@ -534,9 +560,8 @@ pub async fn get_open_positions() {
 }
 
 
-pub async fn get_system_status() {
-    println!("Testing get_system_status...");
-
+pub async fn get_system_status() -> Result<(), String> {
+    println!("Fetching system status...");
 
     let (api_key, api_secret) = load_api_credentials();
 
@@ -548,17 +573,19 @@ pub async fn get_system_status() {
             println!("System status retrieved successfully:");
             println!("Status: {}", status.status);
             println!("Timestamp: {}", status.timestamp);
+            Ok(())
         }
         Err(error) => {
-            eprintln!("Error retrieving system status: {:?}", error);
+            let error_message = format!("Error retrieving system status: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
 
 
-pub async fn get_server_time() {
-    println!("Testing get_server_time...");
-
+pub async fn get_server_time() -> Result<(), String> {
+    println!("Fetching server time...");
 
     let (api_key, api_secret) = load_api_credentials();
 
@@ -570,9 +597,12 @@ pub async fn get_server_time() {
             println!("Server time retrieved successfully:");
             println!("Unix time: {}", time.unixtime);
             println!("RFC 1123 time: {}", time.rfc1123);
+            Ok(())
         }
         Err(error) => {
-            eprintln!("Error retrieving server time: {:?}", error);
+            let error_message = format!("Error retrieving server time: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
@@ -783,10 +813,15 @@ async fn verify_order_helper(client: &RestClient, pair: &str, side: OrderSide, o
 
     match request.send().await {
         Ok(_) => Ok(()),
-        Err(error) => Err(format!("Error verifying order: {:?}", error)),
+        Err(error) => {
+            if error.to_string().contains("EOrder:Insufficient funds") {
+                Err("Insufficient funds to place the order.".to_string())
+            } else {
+                Err(format!("Error verifying order: {:?}", error))
+            }
+        },
     }
 }
-
         //"market": Market order
         //"limit": Limit order
         //"stop-loss": Stop-loss order
@@ -795,82 +830,106 @@ async fn verify_order_helper(client: &RestClient, pair: &str, side: OrderSide, o
         //"take-profit-limit": Take-profit limit order
         //"settle-position": Settle position order
 
-pub async fn add_order() {
-     
-    println!("Adding order...");
-
-    let (api_key, api_secret) = load_api_credentials();
-    let client = RestClient::new(api_key, api_secret);
-
-    let pair = "SOLGBP"; // Example trading pair
-    let side = OrderSide::Buy; // Example order side
-    let order_type = OrderType::Limit; // Example order type
-    let price = "50"; // Example price
-    let volume = "0.5"; // Example volume
-
-  // Verify the order
-  match verify_order_helper(&client, pair, side, order_type, price, volume).await {
-    Ok(_) => {
-        println!("Order verification successful. Proceeding with order placement.");
-
-        // Place the order
-        let request = client
-            .add_order(pair, side, order_type, volume)
-            .price(price)
-            .userref(12345);
-
-        match request.send().await {
-            Ok(order_result) => {
-                println!("Order added successfully:");
-                println!("Description: {:?}", order_result.descr);
-
-                if let Some(txids) = order_result.txid {
-                    println!("Transaction IDs:");
-                    for txid in txids {
-                        println!("- {}", txid);
+        pub async fn add_order(pair: &str, side: &str, order_type: &str, price: &str, volume: &str) -> Result<(), String> {
+            println!("Adding order...");
+        
+            let (api_key, api_secret) = load_api_credentials();
+            let client = RestClient::new(api_key, api_secret);
+        
+            let side_enum = match side {
+                "buy" => OrderSide::Buy,
+                "sell" => OrderSide::Sell,
+                _ => return Err("Invalid order side. Expected 'buy' or 'sell'.".to_string()),
+            };
+        
+            let order_type_enum = match order_type {
+                "limit" => OrderType::Limit,
+                "market" => OrderType::Market,
+                // Add more order types as needed
+                _ => return Err("Invalid order type.".to_string()),
+            };
+        
+            // Verify the order
+            match verify_order_helper(&client, pair, side_enum, order_type_enum, price, volume).await {
+                Ok(_) => {
+                    // Place the order
+                    let request = client
+                        .add_order(pair, side_enum, order_type_enum, volume)
+                        .price(price)
+                        .userref(12345);
+        
+                    match request.send().await {
+                        Ok(order_result) => {
+                            println!("Order added successfully:");
+                            println!("Description: {:?}", order_result.descr);
+        
+                            if let Some(txids) = order_result.txid {
+                                println!("Transaction IDs:");
+                                for txid in txids {
+                                    println!("- {}", txid);
+                                }
+                            } else {
+                                println!("Order not executed. Check your account balance and order details.");
+                            }
+                            Ok(())
+                        }
+                        Err(error) => {
+                            let error_message = format!("Error adding order: {:?}", error);
+                            eprintln!("{}", error_message);
+                            Err(error_message)
+                        }
                     }
-                } else {
-                    println!("Order not executed. Check your account balance and order details.");
+                }
+                Err(error) => {
+                    eprintln!("Order verification failed: {}", error);
+                    Err(error)
                 }
             }
-            Err(error) => {
-                eprintln!("Error adding order: {:?}", error);
-            }
         }
-    }
-    Err(error) => {
-        eprintln!("Order verification failed: {}", error);
-    }
-}
-}
 
-pub async fn verify_order(pair: &str, side: OrderSide, order_type: OrderType, price: &str, volume: &str) -> Result<(), String> {
-    println!("Verifying order...");
+pub async fn verify_order(pair: &str, side: &str, order_type: &str, price: &str, volume: &str) -> Result<(), String> {
+    // change this to check balance or check the API further
+    println!("Verifying order parameters...");
 
     let (api_key, api_secret) = load_api_credentials();
     let client = RestClient::new(api_key, api_secret);
 
+    let side_enum = match side {
+        "buy" => OrderSide::Buy,
+        "sell" => OrderSide::Sell,
+        _ => return Err("Invalid order side. Expected 'buy' or 'sell'.".to_string()),
+    };
+
+    let order_type_enum = match order_type {
+        "limit" => OrderType::Limit,
+        "market" => OrderType::Market,
+        // Add more order types as needed
+        _ => return Err("Invalid order type.".to_string()),
+    };
+
     let request = client
-        .add_order(pair, side, order_type, volume)
+        .add_order(pair, side_enum, order_type_enum, volume)
         .price(price)
-        .validate(true); // Validate the order without placing it
+        .validate(true); // Validate the order parameters without placing the order
 
     match request.send().await {
         Ok(order_result) => {
-            println!("Order verified successfully:");
+            println!("Order parameters verified successfully:");
             println!("Description: {:?}", order_result.descr);
+            println!("Note: This does not guarantee sufficient funds for the order.");
             Ok(())
         }
         Err(error) => {
-            eprintln!("Error verifying order: {:?}", error);
-            Err(format!("Error verifying order: {:?}", error))
+            let error_message = format!("Error verifying order parameters: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
 
 
 pub async fn edit_order() {
-    println!("Editing order...");
+    println!("i dont think there is an edit order. oh well. Editing order...");
 
  /*   let (api_key, api_secret) = load_api_credentials();
     let client = RestClient::new(api_key, api_secret);
