@@ -202,8 +202,8 @@ If you would like to contribute to this project or add support for more exchange
 
 ## License
 
-This project is licensed under whatever
+This is not open source until kraken pay.
 
 ## Copyright
 
-Copyright me and  © 2023 [Georgios Moschovitis](https://gmosx.ninja).
+© 100mountains 2024 and kraken-sdk by © 2023 [Georgios Moschovitis](https://gmosx.ninja).
