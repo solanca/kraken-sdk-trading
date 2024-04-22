@@ -159,22 +159,26 @@
     },
     {
       "name": "get_public_ohlc_data",
-      "description": "Retrieves public OHLC data",
+      "description": "Retrieves public OHLC data for a specified time since the provided timestamp",
       "arguments": [
         {
           "name": "base",
-          "description": "The trading pair (e.g., XBT/USD)"
+          "description": "The base currency of the trading pair (e.g., XBT)"
         },
         {
           "name": "quote",
-          "description": "The trading pair (e.g., XBT/USD)"
+          "description": "The quote currency of the trading pair (e.g., USD)"
         },
         {
           "name": "interval",
-          "description": "The time interval (e.g., Min1, Min5, Hour1, etc.)"
+          "description": "The time interval in minutes (e.g., 1, 5, 15, etc.)"
+        },
+        {
+          "name": "since",
+          "description": "Unix timestamp to retrieve data since (e.g., 1548111600)"
         }
       ]
-    },
+    },    
     {
       "name": "get_ledgers",
       "description": "Retrieves ledger entries",

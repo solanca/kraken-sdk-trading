@@ -1,11 +1,13 @@
 use kraken_rest_client::{Client as RestClient};
-use kraken_rest_client::api::get_ohlc_data::{Interval};
+use kraken_rest_client::{Interval};
+use kraken_rest_client::api::get_ohlc_data::GetOhlcDataRequest;
 use kraken_rest_client::types::pair_name::PairName;
 use kraken_rest_client::OrderSide;
 use kraken_rest_client::OrderType;
 use tokio::runtime::Runtime;
 use std::env;
 use dotenv::dotenv;
+
 
 fn load_api_credentials() -> (String, String) {
     dotenv().ok();
@@ -100,21 +102,23 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
             let base = args.get(0).expect("Missing argument: base");
             let quote = args.get(1).expect("Missing argument: quote");
             let interval = match args.get(2).expect("Missing argument: interval").as_str() {
-                "1" | "1m" | "1min" => Interval::Min1,
-                "5" | "5m" | "5min" => Interval::Min5,
-                "15" | "15m" | "15min" => Interval::Min15,
-                "30" | "30m" | "30min" => Interval::Min30,
-                "60" | "1h" | "60min" => Interval::Hour1,
-                "240" | "4h" | "240min" => Interval::Hour4,
-                "1440" | "1d" | "24h" | "day" => Interval::Day1,
-                "10080" | "7d" | "1w" | "week" => Interval::Day7,
-                "21600" | "15d" => Interval::Day15,
-                _ => return Err("Invalid interval. Supported intervals: 1m, 5m, 15m, 30m, 1h, 4h, 1d, 7d, 15d".to_string()),
+                "1" => Interval::Min1,
+                "5" => Interval::Min5,
+                "15" => Interval::Min15,
+                "30" => Interval::Min30,
+                "60" => Interval::Hour1,
+                "240" => Interval::Hour4,
+                "1440" => Interval::Day1,
+                "10080" => Interval::Day7,
+                "21600" => Interval::Day15,
+                _ => return Err("Invalid interval. Supported intervals: 1, 5, 15, 30, 60, 240, 1440, 10080, 21600".to_string()),
             };
+            let since = args.get(3).map(|s| s.parse().expect("Invalid 'since' timestamp"));
         
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
-            rt.block_on(get_public_ohlc_data(base, quote, interval))
+            rt.block_on(get_public_ohlc_data(base, quote, interval, since))
         }
+        
         
         "verify_order" => {
             let pair = args.get(0).expect("Missing argument: pair");
@@ -159,7 +163,7 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
     }
 }
 
-pub async fn get_public_ohlc_data(base: &str, quote: &str, interval: Interval) -> Result<(), String> {
+pub async fn get_public_ohlc_data(base: &str, quote: &str, interval: Interval, since: Option<i64>) -> Result<(), String> {
     let base_upper = base.to_uppercase();
     let quote_upper = quote.to_uppercase();
     let pair = format!("{}{}", base_upper, quote_upper);
@@ -167,9 +171,11 @@ pub async fn get_public_ohlc_data(base: &str, quote: &str, interval: Interval) -
 
     let client = RestClient::default();
     let pair_name = PairName::from(&base_upper, &quote_upper);
-    let request = client
-        .get_ohlc_data(&pair_name)
-        .interval(interval);
+    let mut request = client.get_ohlc_data(&pair_name).interval(interval);
+
+    if let Some(since_time) = since {
+        request = request.since(since_time);
+    }
 
     match request.send().await {
         Ok(ohlc_data) => {

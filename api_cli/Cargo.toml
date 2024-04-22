@@ -3,14 +3,13 @@ name = "api_cli"
 description = "A CLI for financial exchanges"
 version = "0.1.0"
 license = "Apache-2.0"
-repository = "https://github.com/100mountains/kraken-sdk/tree/main/api_cli"
+repository = "https://github.com/100mountains/api_cli"
 keywords = ["kraken", "cli"]
-authors = ["100mountains"]
+author = ["100mountains"]
 edition = "2021"
 
 [dependencies]
-
-kraken_rest_client = "0.25.0"
+kraken_rest_client = { path = "../kraken_rest_client" }
 kraken_futures_rest_client = "0.25.0"
 tokio = { version = "1", features = ["full"] }
 dotenv = "0.15.0"
