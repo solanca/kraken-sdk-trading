@@ -198,11 +198,11 @@ Please note that some functions may require additional authentication or configu
 
 ## Contributing
 
-If you would like to contribute to this project or add support for more exchanges and functions, please feel free to submit a pull request or open an issue on the project's repository.
+If you would like to contribute to this project or add support for more exchanges and functions, please feel free to ask kraken, binance, kucoin and coinbase to give me money.
 
-## License
+## Licence
 
-This is not open source until kraken pay.
+The licence is not divulged and it is not open source until kraken pay.
 
 ## Copyright
 
