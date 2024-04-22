@@ -43,6 +43,11 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
             rt.block_on(get_order_book(pair, count))
         }
+        "get_recent_trades" => {
+            let pair = args.get(0).expect("Missing argument: pair");
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_recent_trades(pair))
+        }
         "get_trade_balance" => {
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
             rt.block_on(get_trade_balance()).expect("Failed to retrieve trade balance");
@@ -66,6 +71,11 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
             let txids = args.get(0).expect("Missing argument: txids");
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
             rt.block_on(cancel_order_batch(txids))
+        }
+        "cancel_order" => {
+            let txid = args.get(0).expect("Missing argument: txid");
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(cancel_order(txid))
         }
         "add_order" => {
             let pair = args.get(0).expect("Missing argument: pair");
@@ -680,13 +690,12 @@ pub async fn get_open_orders() {
 
 
 /// Retrieves the recent trades for the hardcoded pair "BTC/USD" from the Kraken API.
-pub async fn get_recent_trades() {
-    println!("Retrieving recent trades for pair: BTC/USD");
+pub async fn get_recent_trades(pair: &str) -> Result<(), String> {
+    println!("Retrieving recent trades for pair: {}", pair);
 
     let (api_key, api_secret) = load_api_credentials();
-
     let client = RestClient::new(api_key, api_secret);
-    let request = client.get_recent_trades("BTC/USD");
+    let request = client.get_recent_trades(pair);
 
     match request.send().await {
         Ok(response) => {
@@ -707,9 +716,12 @@ pub async fn get_recent_trades() {
                 }
             }
             println!("Last ID for further requests: {}", response.last);
+            Ok(())
         }
         Err(e) => {
-            eprintln!("Failed to retrieve recent trades: {}", e);
+            let error_message = format!("Failed to retrieve recent trades: {}", e);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
@@ -1011,24 +1023,23 @@ pub async fn cancel_all_orders() -> Result<(), String> {
 }
 
 
-pub async fn cancel_order() {
+pub async fn cancel_order(txid: &str) -> Result<(), String> {
     println!("Canceling order...");
 
     let (api_key, api_secret) = load_api_credentials();
     let client = RestClient::new(api_key, api_secret);
-
-   
-    let txid = "OBNNQW-EGOGB-RMDQ4U"; // Example order ID to cancel
-
     let request = client.cancel_order(txid);
 
     match request.send().await {
         Ok(canceled_order) => {
             println!("Order canceled successfully:");
             println!("Count: {}", canceled_order.count);
+            Ok(())
         }
         Err(error) => {
-            eprintln!("Error canceling order: {:?}", error);
+            let error_message = format!("Error canceling order: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
