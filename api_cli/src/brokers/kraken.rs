@@ -23,6 +23,26 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
             rt.block_on(get_account_balance()).expect("Failed to retrieve account balance");
             Ok(())
         }
+        "get_assets" => {
+            let assets = args.get(0).expect("Missing argument: assets");
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_assets(assets))
+        }
+        "get_asset_pairs" => {
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_asset_pairs())
+        }
+        "get_tickers" => {
+            let pairs = args.get(0).expect("Missing argument: pairs");
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_tickers(pairs))
+        }
+        "get_order_book" => {
+            let pair = args.get(0).expect("Missing argument: pair");
+            let count = args.get(1).map(|v| v.parse().unwrap_or(100)).unwrap_or(100);
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_order_book(pair, count))
+        }
         "get_trade_balance" => {
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
             rt.block_on(get_trade_balance()).expect("Failed to retrieve trade balance");
@@ -41,6 +61,11 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
         "cancel_all_orders" => {
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
             rt.block_on(cancel_all_orders())
+        }
+        "cancel_order_batch" => {
+            let txids = args.get(0).expect("Missing argument: txids");
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(cancel_order_batch(txids))
         }
         "add_order" => {
             let pair = args.get(0).expect("Missing argument: pair");
@@ -99,6 +124,12 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
         
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
             rt.block_on(verify_order(pair, side, order_type, price, volume))
+        }
+        "get_deposit_addresses" => {
+            let asset = args.get(0).expect("Missing argument: asset");
+            let method = args.get(1).expect("Missing argument: method");
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_deposit_addresses(asset, method))
         }
         "get_web_sockets_token" => {
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
@@ -724,46 +755,46 @@ pub async fn get_stakeable_assets() {
     println!("Testing get_stakeable_assets...");
 }
 
-pub async fn get_order_book() {
+pub async fn get_order_book(pair: &str, count: u32) -> Result<(), String> {
     println!("Fetching order book...");
 
     let (api_key, api_secret) = load_api_credentials();
     let client = RestClient::new(api_key, api_secret);
-  // Example: Get the order book for the "XBT/USD" pair with a maximum of 100 entries
-  let pair = "XXBTZUSD";
-  let count = 100; // Maximum number of asks/bids
 
-  let request = client.get_order_book(pair).count(count);
+    let request = client.get_order_book(pair).count(count);
 
-  match request.send().await {
-      Ok(order_book) => {
-          if let Some(book) = order_book.get(pair) {
-              println!("Order book retrieved successfully for pair: {}", pair);
-              println!("Asks:");
-              for ask in &book.asks {
-                  println!("Price: {}, Volume: {}, Timestamp: {}", ask.0, ask.1, ask.2);
-              }
-              println!("Bids:");
-              for bid in &book.bids {
-                  println!("Price: {}, Volume: {}, Timestamp: {}", bid.0, bid.1, bid.2);
-              }
-          } else {
-              println!("No data found for pair: {}", pair);
-          }
-      }
-      Err(error) => {
-          eprintln!("Error retrieving order book: {:?}", error);
-      }
-  }
+    match request.send().await {
+        Ok(order_book) => {
+            if let Some(book) = order_book.get(pair) {
+                println!("Order book retrieved successfully for pair: {}", pair);
+                println!("Asks:");
+                for ask in &book.asks {
+                    println!("Price: {}, Volume: {}, Timestamp: {}", ask.0, ask.1, ask.2);
+                }
+                println!("Bids:");
+                for bid in &book.bids {
+                    println!("Price: {}, Volume: {}, Timestamp: {}", bid.0, bid.1, bid.2);
+                }
+            } else {
+                println!("No data found for pair: {}", pair);
+            }
+            Ok(())
+        },
+        Err(error) => {
+            let error_message = format!("Error retrieving order book: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
+        }
+    }
 }
 
 
 
-pub async fn get_tickers() {
-    println!("Testing get_tickers...");
+pub async fn get_tickers(pairs: &str) -> Result<(), String> {
+    println!("Fetching tickers...");
 
-    let client = RestClient::default(); // Use the default REST client
-    let request = client.get_tickers("XXBTZUSD,DOTUSD"); // Specify the asset pairs to retrieve tickers for here    
+    let client = RestClient::default();
+    let request = client.get_tickers(pairs);
 
     match request.send().await {
         Ok(tickers) => {
@@ -771,11 +802,14 @@ pub async fn get_tickers() {
             for (pair, ticker) in tickers {
                 println!("Pair: {}, Ticker: {:?}", pair, ticker);
             }
-        }
+            Ok(())
+        },
         Err(error) => {
-            eprintln!("Error retrieving tickers: {:?}", error);
+            let error_message = format!("Error retrieving tickers: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
-    }   
+    }
 }
 
 // pub struct CancelOrderBatchResponse {
@@ -783,24 +817,25 @@ pub async fn get_tickers() {
 //    pub results: HashMap<String, CancelOrderBatchResult>,
 // }
 
-pub async fn cancel_order_batch() {
+pub async fn cancel_order_batch(txids: &str) -> Result<(), String> {
     println!("Canceling orders in batch...");
 
     let (api_key, api_secret) = load_api_credentials();
     let client = RestClient::new(api_key, api_secret);
 
-  
-    let txids: Vec<String> = vec!["OQCLML-7WKL3-PBVWWP".to_string(), "OQCLML-7WKL3-PBVWWQ".to_string()]; // Example order IDs to cancel
-
-    let request = client.cancel_order_batch(txids);
+    let txids_vec: Vec<String> = txids.split(',').map(|s| s.to_string()).collect();
+    let request = client.cancel_order_batch(txids_vec);
 
     match request.send().await {
         Ok(batch_result) => {
             println!("Orders canceled in batch successfully.");
             println!("Count: {}", batch_result.count);
-        }
+            Ok(())
+        },
         Err(error) => {
-            eprintln!("Error canceling orders in batch: {:?}", error);
+            let error_message = format!("Error canceling orders in batch: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
@@ -1037,14 +1072,11 @@ pub async fn get_closed_orders() {
     }
 }
 
-pub async fn get_assets() {
+pub async fn get_assets(assets: &str) -> Result<(), String> {
     println!("Fetching assets...");
 
     let (api_key, api_secret) = load_api_credentials();
     let client = RestClient::new(api_key, api_secret);
-
-    // Example: Get information about specific assets
-    let assets = "XBT,ETH,USDT"; // Comma-separated list of assets
 
     let request = client.get_assets().asset(assets);
 
@@ -1059,13 +1091,15 @@ pub async fn get_assets() {
                 println!("  Display decimals: {}", info.display_decimals);
                 println!();
             }
+            Ok(())
         }
         Err(error) => {
-            eprintln!("Error retrieving asset information: {:?}", error);
+            let error_message = format!("Error retrieving asset information: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
-
 
 // pub struct AssetPair {
 //     pub altname: String,
@@ -1085,11 +1119,10 @@ pub async fn get_assets() {
 // }
 
 
-pub async fn get_asset_pairs() {
-    println!("Testing get_asset_pairs...");
+pub async fn get_asset_pairs() -> Result<(), String> {
+    println!("Fetching asset pairs...");
 
     let client = RestClient::default();
-
     let request = client.get_asset_pairs();
 
     match request.send().await {
@@ -1116,9 +1149,12 @@ pub async fn get_asset_pairs() {
                 }
                 println!();
             }
+            Ok(())
         }
         Err(error) => {
-            eprintln!("Error retrieving asset pairs: {:?}", error);
+            let error_message = format!("Error retrieving asset pairs: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
@@ -1182,14 +1218,11 @@ pub async fn get_deposit_status() {
     }
 }
 
-pub async fn get_deposit_addresses() {
+pub async fn get_deposit_addresses(asset: &str, method: &str) -> Result<(), String> {
     println!("Fetching deposit addresses...");
 
     let (api_key, api_secret) = load_api_credentials();
     let client = RestClient::new(api_key, api_secret);
-
-    let asset = "XBT"; // Example asset
-    let method = "Bitcoin"; // Example deposit method
 
     let request = client.get_deposit_addresses(asset, method);
 
@@ -1200,9 +1233,12 @@ pub async fn get_deposit_addresses() {
                 println!("Address: {}, Expire Time: {}, New: {:?}",
                          address.address, address.expiretm, address.new);
             }
+            Ok(())
         },
         Err(error) => {
-            eprintln!("Error retrieving deposit addresses: {:?}", error);
+            let error_message = format!("Error retrieving deposit addresses: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
