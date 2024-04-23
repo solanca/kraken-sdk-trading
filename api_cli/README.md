@@ -167,6 +167,6 @@ For more detailed information on each command, including potential error message
 
 ### Troubleshooting
 
-If you encounter any issues while using this CLI, ensure you are using the latest version of the code and check your network connection. For issues related to specific commands or errors returned by the Kraken API, consult the Kraken API documentation for detailed troubleshooting tips.
+If you encounter any issues while using this CLI, tough.
 
-Thank you for using this CLI. Your feedback and suggestions are always welcome to improve the tool and expand its capabilities.
+Thank you for using this CLI. Your feedback and suggestions are always not welcome to improve the tool and expand its capabilities.
