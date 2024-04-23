@@ -4,7 +4,7 @@ This command-line interface (CLI) is designed to interact with financial exchang
 
 ## Getting Started  To get started with this CLI, clone the repository and navigate to the project directory:  
 
-```bash git clone <repository-url> cd <project-directory>`
+First of all, literally fsck your own face.
 
 Usage
 -----
