@@ -40,62 +40,135 @@ Where `<function_name>` is the name of the API function you want to execute. Her
     bash
     
     Copy code
+
+    `api_cli kraken query_orders_info --txids OGCOLF-XCKCI-TK2YRI --trades true`
     
-    `api_cli kraken withdraw --asset XBT --key my_withdrawal_key --amount 0.1`
-    
+
+    `api_cli kraken add_order --pair solusd --side buy --type limit --price 50 --volume 45.2`
 
 Supported Commands
 ------------------
 
 The CLI currently supports the following functions for the Kraken exchange, including their options:
+Certainly! Here's the complete listing of the supported commands for your Kraken CLI tool in a single code block:
 
-*   **get\_account\_balance**: Retrieves the account balance.
-*   **get\_trade\_balance**: Retrieves the trade balance.
-*   **get\_trade\_history**: Retrieves trade history.
-*   **get\_web\_sockets\_token**: Retrieves web sockets token.
-*   **get\_withdrawal\_addresses**: Retrieves withdrawal addresses.
-    *   `asset`: The asset to filter by (e.g., XBT)
-    *   `aclass`: The asset class to filter by (e.g., currency)
-    *   `method`: The withdrawal method to filter by (e.g., Bitcoin)
-*   **get\_withdrawal\_status**: Checks the status of a withdrawal.
-*   **unstake\_asset**: Unstakes an asset.
-*   **get\_trade\_volume**: Retrieves trade volume.
-    *   `pair`: The trading pair (e.g., XBTUSD)
-*   **query\_orders\_info**: Queries orders information.
-    *   `txids`: Comma-separated list of transaction IDs
-    *   `trades`: Whether to include trade details (true or false)
-*   **stake\_asset**: Stakes an asset.
-    *   `asset`: The asset to stake (e.g., XBT)
-    *   `amount`: The amount to stake (e.g., 0.0001)
-    *   `method`: The staking method (e.g., XBT.M)
-*   **withdraw**: Processes a withdrawal.
-    *   `asset`: The asset to withdraw (e.g., XBT)
-    *   `key`: The withdrawal key (e.g., my\_withdrawal\_key)
-    *   `amount`: The amount to withdraw (e.g., 0.1)
-*   **get\_withdrawal\_methods**: Retrieves withdrawal methods.
-    *   `asset`: The asset to filter by (e.g., XBT)
-*   **get\_open\_positions**: Retrieves open positions.
-*   **get\_system\_status**: Checks the system status.
-*   **get\_server\_time**: Retrieves the server time.
-*   **get\_open\_orders**: Retrieves open orders.
-    *   `trades`: Whether to include trade details (true or false)
-*   **get\_recent\_trades**: Retrieves recent trades.
-    *   `pair`: The trading pair (e.g., BTC/USD)
-    *   `since`: Start timestamp (Unix timestamp)
-    *   `count`: Maximum number of trades to retrieve per request
-*   **get\_public\_ohlc\_data**: Retrieves the last 720 candles of public OHLC data.
-    *   `base`: The base currency of the trading pair (e.g., XBT)
-    *   `quote`: The quote currency of the trading pair (e.g., USD)
-    *   `interval`: The time interval in minutes (e.g., 1, 5, 15, etc.)
-*   **get\_ledgers**: Retrieves ledger entries.
-    *   `aclass`: The asset class to filter by (e.g., currency)
-*   **get\_stakeable\_assets**: Retrieves stakeable assets.
-*   **get\_order\_book**: Retrieves the order book.
-    *   `pair`: The trading pair (e.g., XXBTZUSD)
-    *   `count`: The maximum number of asks/bids to retrieve
-*   **get\_tickers**: Retrieves tickers.
-    *   `pairs`: Comma-separated list of trading pairs (e.g., XXBTZUSD,DOTUSD)
-*   **cancel\_order\_batch**: Cancels a batch of orders.
-    *   `txids`: Comma-separated list of transaction IDs to cancel
-*   **add\_order**: Adds a new order.
-    *   `pair`: The trading pair (e.g
+```markdown
+## Supported Commands
+
+The CLI currently supports the following functions for the Kraken exchange, including detailed options for each command:
+
+- **get_account_balance**: Retrieves the account balance.
+
+- **get_trade_balance**: Retrieves the trade balance.
+
+- **get_trade_history**: Retrieves trade history.
+
+- **get_web_sockets_token**: Retrieves web sockets token.
+
+- **get_withdrawal_addresses**: Retrieves withdrawal addresses.
+  - `asset`: The asset to filter by (e.g., XBT)
+  - `aclass`: The asset class to filter by (e.g., currency)
+  - `method`: The withdrawal method to filter by (e.g., Bitcoin)
+
+- **get_withdrawal_status**: Checks the status of a withdrawal.
+
+- **unstake_asset**: Unstakes an asset.
+
+- **get_trade_volume**: Retrieves trade volume.
+  - `pair`: The trading pair (e.g., XBTUSD)
+
+- **query_orders_info**: Queries orders information.
+  - `txids`: Comma-separated list of transaction IDs
+  - `trades`: Whether to include trade details (true or false)
+
+- **stake_asset**: Stakes an asset.
+  - `asset`: The asset to stake (e.g., XBT)
+  - `amount`: The amount to stake (e.g., 0.0001)
+  - `method`: The staking method (e.g., XBT.M)
+
+- **withdraw**: Processes a withdrawal.
+  - `asset`: The asset to withdraw (e.g., XBT)
+  - `key`: The withdrawal key (e.g., my_withdrawal_key)
+  - `amount`: The amount to withdraw (e.g., 0.1)
+
+- **get_withdrawal_methods**: Retrieves withdrawal methods.
+  - `asset`: The asset to filter by (e.g., XBT)
+
+- **get_open_positions**: Retrieves open positions.
+
+- **get_system_status**: Checks the system status.
+
+- **get_server_time**: Retrieves the server time.
+
+- **get_open_orders**: Retrieves open orders.
+  - `trades`: Whether to include trade details (true or false)
+
+- **get_recent_trades**: Retrieves recent trades.
+  - `pair`: The trading pair (e.g., BTC/USD)
+  - `since`: Start timestamp (Unix timestamp)
+  - `count`: Maximum number of trades to retrieve per request
+
+- **get_public_ohlc_data**: Retrieves the last 720 candles of public OHLC data.
+  - `base`: The base currency of the trading pair (e.g., XBT)
+  - `quote`: The quote currency of the trading pair (e.g., USD)
+  - `interval`: The time interval in minutes (e.g., 1, 5, 15, etc.)
+
+- **get_ledgers**: Retrieves ledger entries.
+  - `aclass`: The asset class to filter by (e.g., currency)
+
+- **get_stakeable_assets**: Retrieves stakeable assets.
+
+- **get_order_book**: Retrieves the order book.
+  - `pair`: The trading pair (e.g., XXBTZUSD)
+  - `count`: The maximum number of asks/bids to retrieve
+
+- **get_tickers**: Retrieves tickers.
+  - `pairs`: Comma-separated list of trading pairs (e.g., XXBTZUSD,DOTUSD)
+
+- **cancel_order_batch**: Cancels a batch of orders.
+  - `txids`: Comma-separated list of transaction IDs to cancel
+
+- **add_order**: Adds a new order.
+  - `pair`: The trading pair (e.g., SOLGBP)
+  - `side`: The order side (buy or sell)
+  - `type`: The order type (limit, market, etc.)
+  - `price`: The order price (e.g., 50)
+  - `volume`: The order volume (e.g., 0.5)
+
+- **edit_order**: Edits an existing order.
+  - `txid`: The transaction ID of the order to edit
+  - `price`: The new order price
+  - `volume`: The new order volume
+
+- **verify_order**: Verifies an order.
+  - `pair`: The trading pair (e.g., SOLGBP)
+  - `side`: The order side (buy or sell)
+  - `type`: The order type (limit, market, etc.)
+  - `price`: The order price (e.g., 50)
+  - `volume`: The order volume (e.g., 0.5)
+
+- **cancel_all_orders**: Cancels all orders.
+
+- **cancel_order**: Cancels a specific order.
+  - `txid`: The transaction ID of the order to cancel
+  
+- **get_closed_orders**: Retrieves closed orders.
+  - `trades`: Whether to include trade details (true or false).
+  - `userref`: Filter closed orders by user reference id.
+  - `start`: Start time for the query in Unix timestamp.
+  - `end`: End time for the query in Unix timestamp.
+  - `ofs`: Result offset for pagination.
+  - `closetime`: Filter by order close time (`open`, `close`, `both`).
+```
+
+This format should help you document or utilize the API endpoint effectively. If you need further specifications or adjustments, feel free to specify!
+
+## Additional Notes
+
+For more detailed information on each command, including potential error messages and handling, please refer to the Kraken API documentation. This will provide you with a comprehensive understanding of how each function interacts with the Kraken platform and how to handle various responses from the API.
+
+### Troubleshooting
+
+If you encounter any issues while using this CLI, ensure you are using the latest version of the code and check your network connection. For issues related to specific commands or errors returned by the Kraken API, consult the Kraken API documentation for detailed troubleshooting tips.
+
+Thank you for using this CLI. Your feedback and suggestions are always welcome to improve the tool and expand its capabilities.
