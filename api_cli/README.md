@@ -1,4 +1,6 @@
-# Cryptocurrency Exchange API CLI
+# Cryptocurrency Exchange API 
+
+todo: abstract the interface to exchanges - currently only kraken SDK
 
 This command-line interface (CLI) allows you to interact with various cryptocurrency exchange APIs, including Kraken, Coinbase, KuCoin, and Binance. It provides a convenient way to test and execute different API functions for each exchange.
 
