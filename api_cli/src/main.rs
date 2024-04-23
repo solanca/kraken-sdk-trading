@@ -1,4 +1,5 @@
 mod brokers;
+// connector to route to SDKs 
 
 use serde_json::Value;
 use std::collections::HashMap;
@@ -53,8 +54,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         })
         .collect();
-
-    println!("All arguments received main: {:?}", command_args);
 
     if let Some(command) = config["commands"].as_array().unwrap().iter().find(|&cmd| cmd["name"].as_str().map(|name| name.trim_start_matches('-')) == Some(command_name)) {
         if command_args.len() != command["arguments"].as_array().unwrap().len() {

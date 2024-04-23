@@ -1,10 +1,10 @@
 [package]
 name = "api_cli"
 description = "A CLI for financial exchanges"
-version = "0.1.0"
+version = "0.0.1"
 license = "Apache-2.0"
 repository = "https://github.com/100mountains/api_cli"
-keywords = ["kraken", "cli"]
+keywords = ["cli"]
 author = ["100mountains"]
 edition = "2021"
 

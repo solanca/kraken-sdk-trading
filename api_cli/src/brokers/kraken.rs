@@ -1,6 +1,5 @@
-use kraken_rest_client::{Client as RestClient};
+use kraken_rest_client::{Client as RestClient, GetOhlcDataRequest};
 use kraken_rest_client::{Interval};
-use kraken_rest_client::api::get_ohlc_data::GetOhlcDataRequest;
 use kraken_rest_client::types::pair_name::PairName;
 use kraken_rest_client::OrderSide;
 use kraken_rest_client::OrderType;
@@ -39,6 +38,11 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
             rt.block_on(get_tickers(pairs))
         }
+        "get_ledgers" => {
+            let aclass = args.get(0).map(|v| v.as_str());
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_ledgers(aclass))
+        }
         "get_order_book" => {
             let pair = args.get(0).expect("Missing argument: pair");
             let count = args.get(1).map(|v| v.parse().unwrap_or(100)).unwrap_or(100);
@@ -47,8 +51,10 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
         }
         "get_recent_trades" => {
             let pair = args.get(0).expect("Missing argument: pair");
+            let since = args.get(1).map(|v| v.as_str());
+            let count = args.get(2).map(|v| v.parse().ok()).flatten();
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
-            rt.block_on(get_recent_trades(pair))
+            rt.block_on(get_recent_trades(pair, since, count))
         }
         "get_trade_balance" => {
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
@@ -64,6 +70,15 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
             let pair = args.get(0).expect("Missing argument: pair");
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
             rt.block_on(get_trade_volume(pair))
+        }
+        "get_open_positions" => {
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_open_positions())
+        }
+        "get_open_orders" => {
+            let trades = args.get(0).map(|v| v.parse().unwrap_or(false)).unwrap_or(false);
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_open_orders(trades))
         }
         "cancel_all_orders" => {
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
@@ -89,6 +104,12 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
             rt.block_on(add_order(pair, side, order_type, price, volume))
         }
+        "query_orders_info" => {
+            let txids = args.get(0).expect("Missing argument: txids");
+            let trades = args.get(1).map(|v| v.parse().unwrap_or(false)).unwrap_or(false);
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(query_orders_info(txids, trades))
+        }
         "get_system_status" => {
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
             rt.block_on(get_system_status())
@@ -113,13 +134,10 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
                 "21600" => Interval::Day15,
                 _ => return Err("Invalid interval. Supported intervals: 1, 5, 15, 30, 60, 240, 1440, 10080, 21600".to_string()),
             };
-            let since = args.get(3).map(|s| s.parse().expect("Invalid 'since' timestamp"));
         
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
-            rt.block_on(get_public_ohlc_data(base, quote, interval, since))
-        }
-        
-        
+            rt.block_on(get_public_ohlc_data(base, quote, interval))
+        }      
         "verify_order" => {
             let pair = args.get(0).expect("Missing argument: pair");
             let side = match args.get(1).expect("Missing argument: side").as_str() {
@@ -139,11 +157,42 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
             rt.block_on(verify_order(pair, side, order_type, price, volume))
         }
+        "get_closed_orders" => {
+            let trades = args.get(0).map(|v| v.parse().unwrap_or(false)).unwrap_or(false);
+            let start = args.get(1).map(|v| v.parse().ok()).flatten();
+            let end = args.get(2).map(|v| v.parse().ok()).flatten();
+            let ofs = args.get(3).map(|v| v.parse().ok()).flatten();
+        
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_closed_orders(trades, start, end, ofs))
+        }
         "get_deposit_addresses" => {
             let asset = args.get(0).expect("Missing argument: asset");
             let method = args.get(1).expect("Missing argument: method");
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
             rt.block_on(get_deposit_addresses(asset, method))
+        }
+        "get_deposit_methods" => {
+            let asset = args.get(0).expect("Missing argument: asset");
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_deposit_methods(asset))
+        }
+        "get_deposit_status" => {
+            let asset = args.get(0).expect("Missing argument: asset");
+            let method = args.get(1).map(|v| v.as_str());
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_deposit_status(asset, method))
+        }
+        "get_stakeable_assets" => {
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(get_stakeable_assets())
+        }
+        "stake_asset" => {
+            let asset = args.get(0).expect("Missing argument: asset");
+            let amount = args.get(1).expect("Missing argument: amount");
+            let method = args.get(2).expect("Missing argument: method");
+            let rt = Runtime::new().expect("Failed to create Tokio runtime");
+            rt.block_on(stake_asset(asset, amount, method))
         }
         "get_web_sockets_token" => {
             let rt = Runtime::new().expect("Failed to create Tokio runtime");
@@ -163,7 +212,7 @@ pub fn execute_command(command: &serde_json::Value, args: &[String]) -> Result<(
     }
 }
 
-pub async fn get_public_ohlc_data(base: &str, quote: &str, interval: Interval, since: Option<i64>) -> Result<(), String> {
+pub async fn get_public_ohlc_data(base: &str, quote: &str, interval: Interval) -> Result<(), String> {
     let base_upper = base.to_uppercase();
     let quote_upper = quote.to_uppercase();
     let pair = format!("{}{}", base_upper, quote_upper);
@@ -171,11 +220,7 @@ pub async fn get_public_ohlc_data(base: &str, quote: &str, interval: Interval, s
 
     let client = RestClient::default();
     let pair_name = PairName::from(&base_upper, &quote_upper);
-    let mut request = client.get_ohlc_data(&pair_name).interval(interval);
-
-    if let Some(since_time) = since {
-        request = request.since(since_time);
-    }
+    let request = client.get_ohlc_data(&pair_name).interval(interval);
 
     match request.send().await {
         Ok(ohlc_data) => {
@@ -416,19 +461,16 @@ pub async fn get_trade_volume(pair: &str) -> Result<(), String> {
 
 
 
-pub async fn query_orders_info() {
-    println!("Testing query_orders_info...");
+pub async fn query_orders_info(txids: &str, trades: bool) -> Result<(), String> {
+    println!("Querying orders information...");
 
     let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
 
-    // Replace with the actual transaction IDs you want to query
-    let txids = "OWJ5IB-7VTBA-ATKFS4,OHN4FQ-TJR6U-TG5HNV";
-
     let request = client
         .query_orders_info(txids)
-        .trades(true);
+        .trades(trades);
 
     match request.send().await {
         Ok(orders_info) => {
@@ -459,22 +501,21 @@ pub async fn query_orders_info() {
                 println!("  Reason: {:?}", order_info.reason);
                 println!();
             }
+            Ok(())
         }
         Err(error) => {
-            eprintln!("Error retrieving orders information: {:?}", error);
+            let error_message = format!("Error retrieving orders information: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
 
-pub async fn stake_asset() {
+pub async fn stake_asset(asset: &str, amount: &str, method: &str) -> Result<(), String> {
     println!("Staking asset...");
 
     let (api_key, api_secret) = load_api_credentials();
     let client = RestClient::new(api_key, api_secret);
-
-    let asset = "XBT"; // Example asset to stake
-    let amount = "0.0001"; // Example amount to stake
-    let method = "XBT.M"; // Example staking method
 
     let request = client.stake_asset(asset, amount, method);
 
@@ -482,9 +523,12 @@ pub async fn stake_asset() {
         Ok(stake_result) => {
             println!("Asset staked successfully.");
             println!("Refid: {}", stake_result.refid);
+            Ok(())
         }
         Err(error) => {
-            eprintln!("Error staking asset: {:?}", error);
+            let error_message = format!("Error staking asset: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
@@ -564,7 +608,7 @@ pub async fn get_withdrawal_methods() {
 }
 
 /// Retrieves the open positions from the Kraken API, always including P&L calculations.
-pub async fn get_open_positions() {
+pub async fn get_open_positions() -> Result<(), String> {
     println!("Retrieving open positions with P&L calculations...");
 
     let (api_key, api_secret) = load_api_credentials();
@@ -599,13 +643,15 @@ pub async fn get_open_positions() {
                     println!("Net: {}", net);
                 }
             }
+            Ok(())
         }
         Err(e) => {
-            eprintln!("Failed to retrieve open positions: {}", e);
+            let error_message = format!("Failed to retrieve open positions: {}", e);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
-
 
 pub async fn get_system_status() -> Result<(), String> {
     println!("Fetching system status...");
@@ -656,13 +702,13 @@ pub async fn get_server_time() -> Result<(), String> {
 
 
 /// Retrieves the open orders from the Kraken API.
-pub async fn get_open_orders() {
+pub async fn get_open_orders(trades: bool) -> Result<(), String> {
     println!("Retrieving open orders...");
 
     let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
-    let request = client.get_open_orders().trades(true); // Assuming you might want trade details by default
+    let request = client.get_open_orders().trades(trades);
 
     match request.send().await {
         Ok(response) => {
@@ -673,11 +719,11 @@ pub async fn get_open_orders() {
                     order_id,
                     order_info.status,
                     order_info.cost,
-                    order_info.descr.pair, 
-                    order_info.descr.orderside, 
-                    order_info.descr.ordertype, 
-                    order_info.descr.price, 
-                    order_info.descr.price2, // Correct field names used
+                    order_info.descr.pair,
+                    order_info.descr.orderside,
+                    order_info.descr.ordertype,
+                    order_info.descr.price,
+                    order_info.descr.price2,
                     order_info.opentm,
                     order_info.oflags,
                     order_info.fee,
@@ -685,47 +731,10 @@ pub async fn get_open_orders() {
                     order_info.vol_executed.unwrap_or("0".to_string()),
                 );
             }
-        }
-        Err(e) => {
-            eprintln!("Failed to retrieve open orders: {}", e);
-        }
-    }
-}
-
-
-
-
-/// Retrieves the recent trades for the hardcoded pair "BTC/USD" from the Kraken API.
-pub async fn get_recent_trades(pair: &str) -> Result<(), String> {
-    println!("Retrieving recent trades for pair: {}", pair);
-
-    let (api_key, api_secret) = load_api_credentials();
-    let client = RestClient::new(api_key, api_secret);
-    let request = client.get_recent_trades(pair);
-
-    match request.send().await {
-        Ok(response) => {
-            println!("Recent trades retrieved successfully:");
-            for (pair_key, trades) in response.pair {
-                println!("Trading pair: {}", pair_key);
-                for trade in trades {
-                    println!(
-                        "Trade ID: {}, Price: {}, Volume: {}, Time: {}, Type: {}, Order Type: {}, Misc: {}",
-                        trade.trade_id(),
-                        trade.price(),
-                        trade.volume(),
-                        trade.time(),
-                        trade.buy_sell(),
-                        trade.market_limit(),
-                        trade.miscellaneous()
-                    );
-                }
-            }
-            println!("Last ID for further requests: {}", response.last);
             Ok(())
         }
         Err(e) => {
-            let error_message = format!("Failed to retrieve recent trades: {}", e);
+            let error_message = format!("Failed to retrieve open orders: {}", e);
             eprintln!("{}", error_message);
             Err(error_message)
         }
@@ -733,14 +742,81 @@ pub async fn get_recent_trades(pair: &str) -> Result<(), String> {
 }
 
 
+
+
+/// Retrieves recent public trades from a unix timestamp, 0 means ALL 
+pub async fn get_recent_trades(pair: &str, since: Option<&str>, count: Option<u16>) -> Result<(), String> {
+    println!("Retrieving recent trades for pair: {}", pair);
+
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+    let mut last_id = since.map(|s| s.to_string());
+    let mut last_trade_id = None;
+
+    loop {
+        let mut request = client.get_recent_trades(pair);
+
+        if let Some(last) = last_id.as_ref() {
+            request = request.since(last.clone());
+        }
+
+        if let Some(cnt) = count {
+            request = request.count(cnt);
+        }
+
+        match request.send().await {
+            Ok(response) => {
+                println!("Recent trades retrieved successfully:");
+                for (pair_key, trades) in response.pair {
+                    println!("Trading pair: {}", pair_key);
+                    for trade in &trades {
+                        println!(
+                            "Trade ID: {}, Price: {}, Volume: {}, Time: {}, Type: {}, Order Type: {}, Misc: {}",
+                            trade.trade_id(),
+                            trade.price(),
+                            trade.volume(),
+                            trade.time(),
+                            trade.buy_sell(),
+                            trade.market_limit(),
+                            trade.miscellaneous()
+                        );
+
+                        if let Some(last_id) = last_trade_id {
+                            if last_id == trade.trade_id() {
+                                return Ok(());
+                            }
+                        }
+                        last_trade_id = Some(trade.trade_id());
+                    }
+
+                    if trades.is_empty() {
+                        return Ok(());
+                    }
+                }
+
+                last_id = Some(response.last);
+            }
+            Err(e) => {
+                let error_message = format!("Failed to retrieve recent trades: {}", e);
+                eprintln!("{}", error_message);
+                return Err(error_message);
+            }
+        }
+    }
+}
+
 /// Retrieves ledger entries from the Kraken API, hardcoding for currency asset class and no specific filtering.
-pub async fn get_ledgers() {
+pub async fn get_ledgers(aclass: Option<&str>) -> Result<(), String> {
     println!("Retrieving ledger entries...");
 
     let (api_key, api_secret) = load_api_credentials();
 
     let client = RestClient::new(api_key, api_secret);
-    let request = client.get_ledgers().aclass("currency");  // Hardcoded to fetch all currency class assets
+    let mut request = client.get_ledgers();
+
+    if let Some(asset_class) = aclass {
+        request = request.aclass(asset_class);
+    }
 
     match request.send().await {
         Ok(response) => {
@@ -761,18 +837,47 @@ pub async fn get_ledgers() {
                 );
             }
             println!("Total count of ledger entries retrieved: {}", response.count);
+            Ok(())
         }
         Err(e) => {
-            eprintln!("Failed to retrieve ledger entries: {}", e);
+            let error_message = format!("Failed to retrieve ledger entries: {}", e);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
 
+pub async fn get_stakeable_assets() -> Result<(), String> {
+    println!("Fetching stakeable assets...");
 
-pub async fn get_stakeable_assets() {
-    println!("Testing get_stakeable_assets...");
+    let (api_key, api_secret) = load_api_credentials();
+    let client = RestClient::new(api_key, api_secret);
+
+    let request = client.get_stakeable_assets();
+
+    match request.send().await {
+        Ok(stakeable_assets) => {
+            println!("Stakeable assets retrieved successfully:");
+            for asset in stakeable_assets {
+                println!("Asset: {}", asset.asset);
+                println!("  Staking Asset: {}", asset.staking_asset);
+                println!("  Method: {:?}", asset.method);
+                println!("  On Chain: {:?}", asset.on_chain);
+                println!("  Minimum Amount:");
+                println!("    Unstaking: {:?}", asset.minimum_amount.as_ref().map(|a| &a.unstaking));
+                println!("    Staking: {:?}", asset.minimum_amount.as_ref().map(|a| &a.staking));
+                println!("  Enabled for User: {:?}", asset.enabled_for_user);
+                println!();
+            }
+            Ok(())
+        }
+        Err(error) => {
+            let error_message = format!("Error retrieving stakeable assets: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
+        }
+    }
 }
-
 pub async fn get_order_book(pair: &str, count: u32) -> Result<(), String> {
     println!("Fetching order book...");
 
@@ -1051,18 +1156,23 @@ pub async fn cancel_order(txid: &str) -> Result<(), String> {
 }
 
 
-pub async fn get_closed_orders() {
+pub async fn get_closed_orders(trades: bool, start: Option<i64>, end: Option<i64>, ofs: Option<i64>) -> Result<(), String> {
     println!("Fetching closed orders...");
 
     let (api_key, api_secret) = load_api_credentials();
     let client = RestClient::new(api_key, api_secret);
 
-    let request = client
-        .get_closed_orders()
-        .trades(true)
-        .start(1674000000) // Example start time (Unix timestamp)
-        .end(1674086400)   // Example end time (Unix timestamp)
-        .ofs(0);           // Example offset
+    let mut request = client.get_closed_orders().trades(trades);
+
+    if let Some(start_time) = start {
+        request = request.start(start_time);
+    }
+    if let Some(end_time) = end {
+        request = request.end(end_time);
+    }
+    if let Some(offset) = ofs {
+        request = request.ofs(offset.try_into().unwrap_or(0));
+    }
 
     match request.send().await {
         Ok(closed_orders) => {
@@ -1082,9 +1192,12 @@ pub async fn get_closed_orders() {
                 println!();
             }
             println!("Count: {}", closed_orders.count);
+            Ok(())
         }
         Err(error) => {
-            eprintln!("Error retrieving closed orders: {:?}", error);
+            let error_message = format!("Error retrieving closed orders: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
@@ -1183,13 +1296,11 @@ pub async fn get_asset_pairs() -> Result<(), String> {
 //     pub gen_address: Option<bool>,
 // }
 
-pub async fn get_deposit_methods() {
+pub async fn get_deposit_methods(asset: &str) -> Result<(), String> {
     println!("Fetching Deposit Methods...");
 
     let (api_key, api_secret) = load_api_credentials();
     let client = RestClient::new(api_key, api_secret);
-
-    let asset = "XBT"; // Example asset
 
     let request = client.get_deposit_methods(asset);
 
@@ -1203,23 +1314,27 @@ pub async fn get_deposit_methods() {
                 println!("  Generate new address: {:?}", method.gen_address);
                 println!();
             }
+            Ok(())
         }
         Err(error) => {
-            eprintln!("Error retrieving deposit methods: {:?}", error);
+            let error_message = format!("Error retrieving deposit methods: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }
 
-pub async fn get_deposit_status() {
+pub async fn get_deposit_status(asset: &str, method: Option<&str>) -> Result<(), String> {
     println!("Fetching deposit status...");
 
     let (api_key, api_secret) = load_api_credentials();
     let client = RestClient::new(api_key, api_secret);
 
-    let asset = "XBT"; // Example asset
-    let method = "Bitcoin"; // Example deposit method
+    let mut request = client.get_deposit_status(asset);
 
-    let request = client.get_deposit_status(asset).method(method.to_string());
+    if let Some(m) = method {
+        request = request.method(m.to_string());
+    }
 
     match request.send().await {
         Ok(deposit_statuses) => {
@@ -1228,9 +1343,12 @@ pub async fn get_deposit_status() {
                 println!("Method: {}, Asset: {}, Reference ID: {}, TX ID: {}, Amount: {}, Time: {}, Status: {}",
                          status.method, status.asset, status.refid, status.txid, status.amount, status.time, status.status);
             }
+            Ok(())
         },
         Err(error) => {
-            eprintln!("Error retrieving deposit status: {:?}", error);
+            let error_message = format!("Error retrieving deposit status: {:?}", error);
+            eprintln!("{}", error_message);
+            Err(error_message)
         }
     }
 }

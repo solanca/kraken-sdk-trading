@@ -154,12 +154,20 @@
         {
           "name": "pair",
           "description": "The trading pair (e.g., BTC/USD)"
+        },
+        {
+          "name": "since",
+          "description": "Start timestamp (Unix timestamp)"
+        },
+        {
+          "name": "count",
+          "description": "Maximum number of trades to retrieve per request"
         }
       ]
     },
     {
       "name": "get_public_ohlc_data",
-      "description": "Retrieves public OHLC data for a specified time since the provided timestamp",
+      "description": "Retrieves the last 720 candles of public OHLC data",
       "arguments": [
         {
           "name": "base",
@@ -172,10 +180,6 @@
         {
           "name": "interval",
           "description": "The time interval in minutes (e.g., 1, 5, 15, etc.)"
-        },
-        {
-          "name": "since",
-          "description": "Unix timestamp to retrieve data since (e.g., 1548111600)"
         }
       ]
     },    
