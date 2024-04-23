@@ -70,6 +70,7 @@ impl ClientBuilder {
 
     pub fn build(self) -> Client {
         // #todo handle the unwrap
+       
         Client {
             base_url: self
                 .base_url
@@ -142,6 +143,7 @@ impl Client {
         Resp: DeserializeOwned,
     {
         let url = format!("{}{}", self.base_url, url);
+        
 
         let resp = self
             .http_client
