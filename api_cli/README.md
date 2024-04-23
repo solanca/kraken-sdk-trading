@@ -161,8 +161,6 @@ The CLI currently supports the following functions for the Kraken exchange, incl
   - `closetime`: Filter by order close time (`open`, `close`, `both`).
 ```
 
-This format should help you document or utilize the API endpoint effectively. If you need further specifications or adjustments, feel free to specify!
-
 ## Additional Notes
 
 For more detailed information on each command, including potential error messages and handling, please refer to the Kraken API documentation. This will provide you with a comprehensive understanding of how each function interacts with the Kraken platform and how to handle various responses from the API.
